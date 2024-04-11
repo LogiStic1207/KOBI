@@ -13,7 +13,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  bool _isObscure = true;
+  bool _isObscure = false;
   void _showToast(BuildContext context, String message) {
     final scaffold = ScaffoldMessenger.of(context);
 
@@ -248,7 +248,7 @@ class _LoginState extends State<Login> {
               ElevatedButton(
                 onPressed: () {
                   FocusScope.of(context).requestFocus(new FocusNode());
-                  // 여기에 로그인 로직을 구현하세요.
+                  _loginRequest();
                 },
                 child:
                     Text('로그인', style: TextStyle(fontWeight: FontWeight.bold)),
