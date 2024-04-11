@@ -1,6 +1,6 @@
-# kobi_3
+# kobi : 코리아텍 비서
 
-A new Flutter project.
+한국기술교육대학교 학생개인정보를 활용한 챗봇 앱.
 
 ## Getting Started
 
