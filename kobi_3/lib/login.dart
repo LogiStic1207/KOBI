@@ -13,8 +13,10 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  bool _isObscure = true;
   void _showToast(BuildContext context, String message) {
     final scaffold = ScaffoldMessenger.of(context);
+
     scaffold.showSnackBar(
       SnackBar(
         duration: Duration(seconds: 1),
@@ -83,9 +85,8 @@ class _LoginState extends State<Login> {
         };
         */
         final response = await http.post(
-          Uri.parse('https://tsso.koreatech.ac.kr/svc/tk/Login.do'),
+          Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
           //body: formData,
-
           body: {
             'id': 'login',
             'user_id': _idController.text,
@@ -132,7 +133,7 @@ class _LoginState extends State<Login> {
     } else {
       try {
         final response = await http.post(
-          Uri.parse('https://tsso.koreatech.ac.kr/svc/tk/Login.do'),
+          Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
           body: {
             'id': 'login',
             'user_id': _storedId,
@@ -173,55 +174,89 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    print(_headers['Cookie']);
-    return _storedId != null &&
-            _storedPw != null &&
-            _changeMod == false &&
-            _headers['Cookie'] != null
-        ? Container(
-            child: Text('로그인 성공!'),
-          )
-        : Container(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(10),
-                  child: Column(
-                    children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          hintText: '정보시스템 ID',
-                        ),
-                        controller: _idController,
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          hintText: 'Password',
-                        ),
-                        obscureText: true,
-                        controller: _pwController,
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/logo.png',
+                  width: 250, height: 200, fit: BoxFit.fill), // 로고 이미지
+              SizedBox(height: 20), // 로고와 제목 사이의 간격
+              Text(
+                'KOBI: 코리아텍 비서',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20), // 제목과 입력필드 사이의 간격
+              Container(
+                margin:
+                    EdgeInsets.only(bottom: 10), // ID 박스와 Password 박스 사이의 간격
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  // 로그인 버튼
-                  onPressed: () {
-                    FocusScope.of(context).requestFocus(new FocusNode());
-                    _loginRequest();
-                  },
-                  child: Text(
-                    '로그인',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                child: TextField(
+                  decoration: InputDecoration(
+                    border: InputBorder.none, // 텍스트 필드 테두리 제거
+                    hintText: 'ID',
+                    contentPadding: EdgeInsets.all(10), // 내부 패딩
+                  ),
+                  controller: _idController,
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    border: InputBorder.none, // 텍스트 필드 테두리 제거
+                    hintText: 'Password',
+                    contentPadding: EdgeInsets.all(10), // 내부 패딩
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          _isObscure ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        setState(() {
+                          _isObscure = !_isObscure;
+                        });
+                      },
                     ),
                   ),
+                  obscureText: _isObscure,
+                  controller: _pwController,
                 ),
-              ],
-            ),
-          );
+              ),
+              SizedBox(height: 20), // 입력필드와 로그인 버튼 사이의 간격
+              ElevatedButton(
+                onPressed: () {
+                  FocusScope.of(context).requestFocus(new FocusNode());
+                  // 여기에 로그인 로직을 구현하세요.
+                },
+                child:
+                    Text('로그인', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
