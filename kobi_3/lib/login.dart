@@ -172,56 +172,81 @@ class _LoginState extends State<Login> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     print(_headers['Cookie']);
-    return _storedId != null &&
-            _storedPw != null &&
-            _changeMod == false &&
-            _headers['Cookie'] != null
-        ? Container(
-            child: Text('로그인 성공!'),
-          )
-        : Container(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(10),
-                  child: Column(
-                    children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          hintText: '정보시스템 ID',
-                        ),
-                        controller: _idController,
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          hintText: 'Password',
-                        ),
-                        obscureText: true,
-                        controller: _pwController,
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/logo.png'), // 로고 이미지
+              SizedBox(height: 20), // 로고와 제목 사이의 간격
+              Text(
+                'KOBI: 코리아텍 비서',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-                ElevatedButton(
-                  // 로그인 버튼
-                  onPressed: () {
-                    FocusScope.of(context).requestFocus(new FocusNode());
-                    _loginRequest();
-                  },
-                  child: Text(
-                    '로그인',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+              ),
+              SizedBox(height: 20), // 제목과 입력필드 사이의 간격
+              _storedId != null &&
+                      _storedPw != null &&
+                      _changeMod == false &&
+                      _headers['Cookie'] != null
+                  ? Container(
+                      child: Text('로그인 성공!'),
+                    )
+                  : Container(
+                      padding: EdgeInsets.all(10),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(10),
+                            child: Column(
+                              children: [
+                                TextField(
+                                  decoration: InputDecoration(
+                                    border: UnderlineInputBorder(),
+                                    hintText: 'ID',
+                                  ),
+                                  controller: _idController,
+                                ),
+                                SizedBox(
+                                    height: 10), // ID와 Password 입력필드 사이의 간격
+                                TextField(
+                                  decoration: InputDecoration(
+                                    border: UnderlineInputBorder(),
+                                    hintText: 'Password',
+                                  ),
+                                  obscureText: true,
+                                  controller: _pwController,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20), // 입력필드와 로그인 버튼 사이의 간격
+                          ElevatedButton(
+                            onPressed: () {
+                              FocusScope.of(context)
+                                  .requestFocus(new FocusNode());
+                              _loginRequest();
+                            },
+                            child: Text(
+                              '로그인',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          );
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

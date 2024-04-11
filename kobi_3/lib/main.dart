@@ -18,10 +18,6 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'KOBI: 코리아텍 비서',
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('KOBI: 코리아텍 비서'),
-          actions: [Icon(Icons.calendar_month)],
-        ),
         body: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
