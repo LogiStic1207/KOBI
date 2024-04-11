@@ -6,7 +6,8 @@ class ChatBotPage extends StatefulWidget {
   final VoidCallback _resetLoginInfo;
   final Map<String, String> _headers;
 
-  ChatBotPage(this._storedId, this._storedPw, this._resetLoginInfo, this._headers);
+  ChatBotPage(
+      this._storedId, this._storedPw, this._resetLoginInfo, this._headers);
 
   @override
   _ChatBotPageState createState() => _ChatBotPageState();
@@ -71,7 +72,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
             child: ListView.builder(
               reverse: true,
               itemCount: _messages.length,
-              itemBuilder: (context, index) => _buildMessageBubble(_messages[index]),
+              itemBuilder: (context, index) =>
+                  _buildMessageBubble(_messages[index]),
             ),
           ),
           _isSending ? LinearProgressIndicator() : SizedBox(),

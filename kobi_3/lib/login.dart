@@ -1,9 +1,9 @@
-import 'dart:async';
-import 'dart:io';
-import 'package:http/http.dart' as http;
+//import 'package:koreatech_chatbot/mypage.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'chatbotpage.dart'; // ChatBotPage를 import 합니다.
+import './exception_handlers.dart';
+//import 'dart:html' as html;
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -58,28 +58,42 @@ class _LoginState extends State<Login> {
     }
   }
 
+  /*
   void _resetLoginInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    //SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _storedId = null;
       _storedPw = null;
       _changeMod = true;
     });
   }
-
+  */
   void _loginRequest() async {
     if (_changeMod == true) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       try {
         print(_idController.text);
+        /*
+        var formData = {
+          'anchor': html.window.location.hash,
+          'id': 'EL2',
+          'RelayState': '/local/sso/index.php',
+          'user_id': _idController.text,
+          'user_password': _pwController.text,
+        };
+        */
         final response = await http.post(
-          Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
+          Uri.parse('https://tsso.koreatech.ac.kr/svc/tk/Login.do'),
+          //body: formData,
+
           body: {
-            'ssoLoginFrm': 'ssoLoginFrm',
+            'id': 'login',
             'user_id': _idController.text,
-            'user_pwd': _pwController.text,
+            'user_password': _pwController.text,
           }, // 로그인 input
         ).timeout(Duration(seconds: 5));
+        print('Response status: ${response.statusCode}'); //500에러 발생!
+        print('Reason: ${response.reasonPhrase}');
 
         if (response.statusCode == 200) {
           // 연결됨
@@ -89,6 +103,7 @@ class _LoginState extends State<Login> {
             print('login failed');
             _showToast(context, '로그인 실패. ID/PW를 확인해주세요');
           } else {
+            print('로그인 성공');
             _showToast(context, '로그인 성공');
             setState(() {
               _storedId = _idController.text;
@@ -99,7 +114,8 @@ class _LoginState extends State<Login> {
             });
           }
 
-          String rawCookie = response.headers['set-cookie'].toString();
+          //String rawCookie = response.headers['set-cookie'].toString();
+          /*
           if (rawCookie != null) {
             // 웹서버로부터 받은 set-cookie
             int idx = rawCookie.indexOf(';');
@@ -107,21 +123,20 @@ class _LoginState extends State<Login> {
                 0, idx); // PHPSESSID 추출 후 클라이언트 헤더 Cookie에 저장
           }
           print(_headers['Cookie']); // print PHPSESSID
+          */
           print(response.body); // 한글이 깨지는 문제를 해결
         }
-      } on SocketException catch (e) {
-        _showToast(context, '인터넷 연결을 확인해 주세요');
-      } on TimeoutException catch (e) {
-        _showToast(context, '정보시스템 서버에 접속할 수 없습니다.');
+      } catch (e) {
+        throw ExceptionHandlers().getExceptionString(e);
       }
     } else {
       try {
         final response = await http.post(
-          Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
+          Uri.parse('https://tsso.koreatech.ac.kr/svc/tk/Login.do'),
           body: {
-            'ssoLoginFrm': 'ssoLoginFrm',
+            'id': 'login',
             'user_id': _storedId,
-            'user_pwd': _storedPw,
+            'user_password': _storedPw,
           }, // 로그인 input
         ).timeout(Duration(seconds: 5));
 
@@ -138,6 +153,7 @@ class _LoginState extends State<Login> {
 
           String rawCookie = response.headers['set-cookie'].toString();
           print('rawc' + rawCookie);
+          /*
           if (rawCookie != null) {
             // 웹서버로부터 받은 set-cookie
             int idx = rawCookie.indexOf(';');
@@ -146,13 +162,11 @@ class _LoginState extends State<Login> {
                   0, idx); // PHPSESSID 추출 후 클라이언트 헤더 Cookie에 저장
             });
             print('1:' + _headers['Cookie'].toString()); // print PHPSESSID
-          }
+          }*/
           print(response.body); // 한글이 깨지는 문제를 해결
         }
-      } on SocketException catch (e) {
-        _showToast(context, '인터넷 연결을 확인해 주세요');
-      } on TimeoutException catch (e) {
-        _showToast(context, '정보시스템 서버에 접속할 수 없습니다.');
+      } catch (e) {
+        throw ExceptionHandlers().getExceptionString(e);
       }
     }
   }
@@ -164,7 +178,9 @@ class _LoginState extends State<Login> {
             _storedPw != null &&
             _changeMod == false &&
             _headers['Cookie'] != null
-        ? ChatBotPage(_storedId, _storedPw, _resetLoginInfo, _headers)
+        ? Container(
+            child: Text('로그인 성공!'),
+          )
         : Container(
             padding: EdgeInsets.all(10),
             child: Column(
@@ -176,7 +192,7 @@ class _LoginState extends State<Login> {
                       TextField(
                         decoration: InputDecoration(
                           border: UnderlineInputBorder(),
-                          hintText: 'ID',
+                          hintText: '정보시스템 ID',
                         ),
                         controller: _idController,
                       ),
@@ -191,17 +207,15 @@ class _LoginState extends State<Login> {
                     ],
                   ),
                 ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 255, 145, 0),
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)),
-                  ),
+                ElevatedButton(
+                  // 로그인 버튼
                   onPressed: () {
                     FocusScope.of(context).requestFocus(new FocusNode());
                     _loginRequest();
                   },
-                  child: Text('로그인',style: TextStyle(
+                  child: Text(
+                    '로그인',
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
