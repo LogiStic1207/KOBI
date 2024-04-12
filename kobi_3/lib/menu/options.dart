@@ -8,14 +8,10 @@ class OptionsPage extends StatefulWidget {
 class _OptionsPageState extends State<OptionsPage> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
-  String? _notificationMode = 'Sound'; // Make sure to declare it nullable
+  String? _notificationMode =
+      '소리'; // Ensure this matches an item in your list exactly
 
-  List<String> _notificationModes = [
-    'Vibrate',
-    'Sound',
-    'Sound and Vibrate',
-    'Silent'
-  ];
+  final List<String> _notificationModes = ['진동', '소리', '진동 & 소리', '무음'];
 
   @override
   Widget build(BuildContext context) {
@@ -57,23 +53,21 @@ class _OptionsPageState extends State<OptionsPage> {
                 );
               }).toList(),
               hint: Text('Select Mode'),
-              disabledHint: Text('Disabled'),
+              disabledHint: Text('꺼짐'), // Text when notifications are disabled
             ),
           ),
           Divider(),
           SwitchListTile(
             title: Text('어두운 모드'),
-            value:
-                _darkModeEnabled, // This should be a state variable if needed
+            value: _darkModeEnabled,
             onChanged: (bool value) {
               setState(() {
                 _darkModeEnabled = value;
               });
-              // Handle dark mode toggle
             },
           ),
           Divider(),
-          // You can add more settings here
+          // Additional settings can be added here
         ],
       ),
     );
