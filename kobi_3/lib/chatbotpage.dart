@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
 
 class ChatBotPage extends StatefulWidget {
@@ -91,6 +92,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
                   ListTile(
                     title: Text('시간표 제작'),
                     onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => TimetablePage()),
+                      );
                       // Navigate to timetable creation page - to be implemented later
                     },
                   ),
