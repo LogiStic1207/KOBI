@@ -11,30 +11,7 @@ class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
-/*
-class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CNU Dorm 자가진단',
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('CNU Dorm 자가진단'),
-          actions: [Icon(Icons.calendar_month)
-          ],
-        ),
-        body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            FocusScope.of(context).requestFocus(new FocusNode());
-          },
-          child: Login(),
-        ),
-      ),
-    );
-  }
-}
-*/
+
 
 class _MyAppState extends State<MyApp> {
   @override

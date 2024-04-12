@@ -3,7 +3,7 @@ import 'chatbotpage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-//import './exception_handlers.dart';
+import './exception_handlers.dart';
 //import 'dart:html' as html;
 
 
@@ -291,7 +291,7 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        //throw ExceptionHandlers().getExceptionString(e);
+        throw ExceptionHandlers().getExceptionString(e);
       }
     } else {
       try {
@@ -333,7 +333,7 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        //throw ExceptionHandlers().getExceptionString(e);
+        throw ExceptionHandlers().getExceptionString(e);
       }
     }
   }

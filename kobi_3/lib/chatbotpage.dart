@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kobi_3/timetablepage.dart';
 
 class ChatBotPage extends StatefulWidget {
   /*final String _storedId;
@@ -79,41 +80,46 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ],
       ),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const SizedBox(
-              height: 100.0,
-              child: DrawerHeader(
-                child: Text('메뉴'),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: <Widget>[
+                  const SizedBox(
+                    height: 100.0,
+                    child: DrawerHeader(
+                      child: Text('메뉴'),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('시간표 제작'),
+                    onTap: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => TimetablePage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: Text('설정'),
+                    onTap: () {
+                      // 설정 페이지로 네비게이션 (추후 구현 필요)
+                    },
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              title: Text('과제목록'),
-              onTap: () {
-                // 과제목록 페이지로 네비게이션 (추후 구현 필요)
-              },
-            ),
-            ListTile(
-              title: Text('시간표 제작'),
-              onTap: () {
-                // 시간표 제작 페이지로 네비게이션 (추후 구현 필요)
-              },
-            ),
-            ListTile(
-              title: Text('설정'),
-              onTap: () {
-                // 설정 페이지로 네비게이션 (추후 구현 필요)
-              },
-            ),
-            ListTile(
-              title: Text('로그아웃'),
-              onTap: () {
-                // 로그아웃 로직 구현 (추후 구현 필요)
-              },
+            Container(
+              margin: EdgeInsets.all(20),
+              height: 300,
+              width: 300,
+              alignment: Alignment.topCenter,
+              decoration: BoxDecoration( borderRadius: BorderRadius.circular(5.0),
+              border: Border.all(color: Colors.black), color: Colors.blue),
+              child: Text('장바구니'),
             ),
           ],
         ),
