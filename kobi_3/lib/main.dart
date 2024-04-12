@@ -11,7 +11,7 @@ class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
-
+/*
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
@@ -23,6 +23,25 @@ class _MyAppState extends State<MyApp> {
           actions: [Icon(Icons.calendar_month)
           ],
         ),
+        body: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            FocusScope.of(context).requestFocus(new FocusNode());
+          },
+          child: Login(),
+        ),
+      ),
+    );
+  }
+}
+*/
+
+class _MyAppState extends State<MyApp> {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'KOBI: 코리아텍 비서',
+      home: Scaffold(
         body: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {

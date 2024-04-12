@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class ChatBotPage extends StatefulWidget {
-  final String _storedId;
+  /*final String _storedId;
   final String _storedPw;
   final VoidCallback _resetLoginInfo;
   final Map<String, String> _headers;
 
-  ChatBotPage(this._storedId, this._storedPw, this._resetLoginInfo, this._headers);
-
+  ChatBotPage(
+      this._storedId, this._storedPw, this._resetLoginInfo, this._headers);*/
   @override
   _ChatBotPageState createState() => _ChatBotPageState();
 }
@@ -30,10 +30,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Future<void> _simulateBotResponse(String message) async {
-    // 모의 챗봇 응답 시간 설정
     await Future.delayed(Duration(seconds: 2));
-
-    // 모의 챗봇 응답
     setState(() {
       _messages.insert(0, {"text": "이것은 챗봇의 응답입니다.", "isBot": true});
       _isSending = false;
@@ -63,7 +60,63 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("챗봇 페이지"),
+        title: Text("KOBI"),
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            );
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.person),
+            onPressed: () {
+              // 사용자 정보 페이지로 네비게이션 (추후 구현 필요)
+            },
+          ),
+        ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const SizedBox(
+              height: 100.0,
+              child: DrawerHeader(
+                child: Text('메뉴'),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text('과제목록'),
+              onTap: () {
+                // 과제목록 페이지로 네비게이션 (추후 구현 필요)
+              },
+            ),
+            ListTile(
+              title: Text('시간표 제작'),
+              onTap: () {
+                // 시간표 제작 페이지로 네비게이션 (추후 구현 필요)
+              },
+            ),
+            ListTile(
+              title: Text('설정'),
+              onTap: () {
+                // 설정 페이지로 네비게이션 (추후 구현 필요)
+              },
+            ),
+            ListTile(
+              title: Text('로그아웃'),
+              onTap: () {
+                // 로그아웃 로직 구현 (추후 구현 필요)
+              },
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -71,12 +124,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
             child: ListView.builder(
               reverse: true,
               itemCount: _messages.length,
-              itemBuilder: (context, index) => _buildMessageBubble(_messages[index]),
+              itemBuilder: (context, index) =>
+                  _buildMessageBubble(_messages[index]),
             ),
           ),
-          _isSending ? LinearProgressIndicator() : SizedBox(),
+          _isSending ? LinearProgressIndicator() : SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
               children: [
                 Expanded(
@@ -90,7 +144,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
                 IconButton(
                   icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: _sendMessage,
