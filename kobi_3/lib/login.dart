@@ -1,4 +1,4 @@
-//import 'package:koreatech_chatbot/mypage.dart';
+import 'chatbotpage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,9 +88,11 @@ class _LoginState extends State<Login> {
           Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
           //body: formData,
           body: {
-            'id': 'login',
-            'user_id': _idController.text,
-            'user_password': _pwController.text,
+            'user_id': _idController.text, // 사용자 ID
+            'user_pwd': _pwController.text, // 사용자 비밀번호
+            'RelayState': '/index.jsp',
+            'id': 'PORTAL', // doPortalLogin()에서 추가된 숨겨진 필드들
+            'targetId': 'PORTAL',
           }, // 로그인 input
         ).timeout(Duration(seconds: 5));
         print('Response status: ${response.statusCode}'); //500에러 발생!
@@ -128,16 +130,18 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        throw ExceptionHandlers().getExceptionString(e);
+        //throw ExceptionHandlers().getExceptionString(e);
       }
     } else {
       try {
         final response = await http.post(
           Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
           body: {
-            'id': 'login',
-            'user_id': _storedId,
-            'user_password': _storedPw,
+            'user_id': _idController.text, // 사용자 ID
+            'user_pwd': _pwController.text, // 사용자 비밀번호
+            'RelayState': '/index.jsp',
+            'id': 'PORTAL', // doPortalLogin()에서 추가된 숨겨진 필드들
+            'targetId': 'PORTAL',
           }, // 로그인 input
         ).timeout(Duration(seconds: 5));
 
@@ -150,6 +154,7 @@ class _LoginState extends State<Login> {
             _showToast(context, '로그인 실패. ID/PW를 확인해주세요');
           } else {
             _showToast(context, '로그인 성공');
+            ;
           }
 
           String rawCookie = response.headers['set-cookie'].toString();
@@ -167,7 +172,7 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        throw ExceptionHandlers().getExceptionString(e);
+        //throw ExceptionHandlers().getExceptionString(e);
       }
     }
   }
@@ -247,6 +252,9 @@ class _LoginState extends State<Login> {
               SizedBox(height: 20), // 입력필드와 로그인 버튼 사이의 간격
               ElevatedButton(
                 onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => ChatBotPage()),
+                  );
                   FocusScope.of(context).requestFocus(new FocusNode());
                   _loginRequest();
                 },
