@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:kobi_3/timetablepage.dart';
+import 'package:kobi_3/menu/mypage.dart';
+import 'package:kobi_3/menu/timetablepage.dart';
+import 'menu/options.dart';
 
 class ChatBotPage extends StatefulWidget {
-  /*final String _storedId;
-  final String _storedPw;
-  final VoidCallback _resetLoginInfo;
-  final Map<String, String> _headers;
-
-  ChatBotPage(
-      this._storedId, this._storedPw, this._resetLoginInfo, this._headers);*/
   @override
   _ChatBotPageState createState() => _ChatBotPageState();
 }
@@ -74,7 +69,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
           IconButton(
             icon: Icon(Icons.person),
             onPressed: () {
-              // 사용자 정보 페이지로 네비게이션 (추후 구현 필요)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MyPage()),
+              );
+              // User info navigation logic will be implemented later
             },
           ),
         ],
@@ -106,7 +105,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
                   ListTile(
                     title: Text('설정'),
                     onTap: () {
-                      // 설정 페이지로 네비게이션 (추후 구현 필요)
+                      // Settings page navigation - to be implemented later
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => OptionsPage()),
+                      );
                     },
                   ),
                 ],
@@ -120,6 +123,30 @@ class _ChatBotPageState extends State<ChatBotPage> {
               decoration: BoxDecoration( borderRadius: BorderRadius.circular(5.0),
               border: Border.all(color: Colors.black), color: Colors.blue),
               child: Text('장바구니'),
+            ),
+            Container(
+              width:
+                  150, // Use double.infinity to span the full width of the drawer
+              padding: EdgeInsets.all(4),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    textStyle: TextStyle(
+                      color: Colors.black, // Set text color to black
+                    )),
+                onPressed: () {
+                  // Implement logout logic
+                },
+                child: Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    color: Colors.black, // Ensure text color is black
+                  ),
+                ),
+              ),
             ),
           ],
         ),
