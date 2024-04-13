@@ -130,12 +130,12 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        //throw ExceptionHandlers().getExceptionString(e);
+        throw ExceptionHandlers().getExceptionString(e);
       }
     } else {
       try {
         final response = await http.post(
-          Uri.parse('https://portal.koreatech.ac.kr/login.jsp'),
+          Uri.parse('https://tsso.koreatech.ac.kr/svc/tk/Login.do'),
           body: {
             'user_id': _idController.text, // 사용자 ID
             'user_pwd': _pwController.text, // 사용자 비밀번호
@@ -172,7 +172,7 @@ class _LoginState extends State<Login> {
           print(response.body); // 한글이 깨지는 문제를 해결
         }
       } catch (e) {
-        //throw ExceptionHandlers().getExceptionString(e);
+        throw ExceptionHandlers().getExceptionString(e);
       }
     }
   }
