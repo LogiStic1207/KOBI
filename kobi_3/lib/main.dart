@@ -16,13 +16,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CNU Dorm 자가진단',
+      title: 'KOBI: 코리아텍 비서',
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('CNU Dorm 자가진단'),
-          actions: [Icon(Icons.calendar_month)
-          ],
-        ),
         body: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
