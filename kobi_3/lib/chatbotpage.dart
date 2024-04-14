@@ -35,20 +35,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
   Widget _buildMessageBubble(Map<String, dynamic> message) {
     bool isBot = message["isBot"];
-    return Container(
-      padding: EdgeInsets.all(8),
-      alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: isBot ? Colors.grey[300] : Colors.blue[300],
-        ),
-        child: Text(
-          message["text"],
-          style: TextStyle(fontSize: 16),
-        ),
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      title: Text(
+        message["text"],
+        style: TextStyle(fontSize: 16),
+        textAlign: isBot ? TextAlign.left : TextAlign.right,
       ),
+      tileColor: isBot ? Colors.grey[300] : Colors.blue[300],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 
@@ -57,103 +52,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("KOBI"),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            );
-          },
-        ),
         actions: [
           IconButton(
             icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MyPage()),
-              );
-              // User info navigation logic will be implemented later
-            },
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => MyPage())),
           ),
         ],
       ),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  const SizedBox(
-                    height: 100.0,
-                    child: DrawerHeader(
-                      child: Text('메뉴'),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text('시간표 제작'),
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                            builder: (context) => TimetablePage()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    title: Text('설정'),
-                    onTap: () {
-                      // Settings page navigation - to be implemented later
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => OptionsPage()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(20),
-              height: 300,
-              width: 300,
-              alignment: Alignment.topCenter,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5.0),
-                  border: Border.all(color: Colors.black),
-                  color: Colors.blue),
-              child: Text('장바구니'),
-            ),
-            Container(
-              width:
-                  150, // Use double.infinity to span the full width of the drawer
-              padding: EdgeInsets.all(4),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                    textStyle: TextStyle(
-                      color: Colors.black, // Set text color to black
-                    )),
-                onPressed: () {
-                  // Implement logout logic
-                },
-                child: Text(
-                  '로그아웃',
-                  style: TextStyle(
-                    color: Colors.black, // Ensure text color is black
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      drawer: ChatDrawer(),
       body: Column(
         children: [
           Expanded(
@@ -165,27 +72,74 @@ class _ChatBotPageState extends State<ChatBotPage> {
             ),
           ),
           _isSending ? LinearProgressIndicator() : SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "메시지를 입력하세요...",
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
-                  onPressed: _sendMessage,
-                ),
-              ],
+          MessageInputField(controller: _controller, onSend: _sendMessage),
+        ],
+      ),
+    );
+  }
+}
+
+class MessageInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final Function onSend;
+
+  const MessageInputField(
+      {Key? key, required this.controller, required this.onSend})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: "메시지를 입력하세요...",
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
             ),
+          ),
+          IconButton(
+            icon: Icon(Icons.send, color: Colors.blue),
+            onPressed: () => onSend(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ChatDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.blue),
+            child:
+                Text('메뉴', style: TextStyle(color: Colors.white, fontSize: 24)),
+          ),
+          ListTile(
+            title: Text('시간표 제작'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => TimetablePage())),
+          ),
+          ListTile(
+            title: Text('설정'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => OptionsPage())),
+          ),
+          ListTile(
+            title: Text('로그아웃'),
+            onTap: () {
+              // 로그아웃 로직 구현
+            },
           ),
         ],
       ),
