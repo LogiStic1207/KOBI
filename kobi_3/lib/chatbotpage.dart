@@ -98,7 +98,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
                     title: Text('시간표 제작'),
                     onTap: () {
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) => TimetablePage()),
+                        MaterialPageRoute(
+                            builder: (context) => TimetablePage()),
                       );
                     },
                   ),
@@ -120,8 +121,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
               height: 300,
               width: 300,
               alignment: Alignment.topCenter,
-              decoration: BoxDecoration( borderRadius: BorderRadius.circular(5.0),
-              border: Border.all(color: Colors.black), color: Colors.blue),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5.0),
+                  border: Border.all(color: Colors.black),
+                  color: Colors.blue),
               child: Text('장바구니'),
             ),
             Container(
