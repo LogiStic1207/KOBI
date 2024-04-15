@@ -1,4 +1,6 @@
+// options.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OptionsPage extends StatefulWidget {
   @override
@@ -8,10 +10,27 @@ class OptionsPage extends StatefulWidget {
 class _OptionsPageState extends State<OptionsPage> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
-  String? _notificationMode =
-      '소리'; // Ensure this matches an item in your list exactly
+  String? _notificationMode = '소리';
 
   final List<String> _notificationModes = ['진동', '소리', '진동 & 소리', '무음'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  _loadSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
+    });
+  }
+
+  _saveDarkMode(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkModeEnabled', value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +72,7 @@ class _OptionsPageState extends State<OptionsPage> {
                 );
               }).toList(),
               hint: Text('Select Mode'),
-              disabledHint: Text('꺼짐'), // Text when notifications are disabled
+              disabledHint: Text('꺼짐'),
             ),
           ),
           Divider(),
@@ -63,6 +82,7 @@ class _OptionsPageState extends State<OptionsPage> {
             onChanged: (bool value) {
               setState(() {
                 _darkModeEnabled = value;
+                _saveDarkMode(value);
               });
             },
           ),

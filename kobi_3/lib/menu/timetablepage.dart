@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/widgets.dart';
+import 'package:kobi_3/menu/mypage.dart';
 import 'options.dart';
-
 import '/chatbotpage.dart';
 import 'package:flutter/material.dart';
 //import './exception_handlers.dart';
@@ -52,7 +50,10 @@ class _TimetablePageState extends State<TimetablePage> {
           IconButton(
             icon: Icon(Icons.person),
             onPressed: () {
-              // 사용자 정보 페이지로 네비게이션 (추후 구현 필요)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MyPage()),
+              );
             },
           ),
         ],
