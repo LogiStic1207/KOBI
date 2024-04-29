@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 
-
-import 'package:graphql_flutter/graphql_flutter.dart';import 'options.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'options.dart';
+import 'package:kobi_3/menu/mypage.dart';
 import '/chatbotpage.dart';
 import 'package:flutter/material.dart';
 //import './exception_handlers.dart';
@@ -34,7 +35,9 @@ class _TimetablePageState extends State<TimetablePage> {
     '교양학부',
     '융합학과'
   ];
+  final _rowsperPages = ['10', '20', '30', '50', '100'];
   var _selectedDepartment = '학부 선택';
+  var _selectedRpp = '10';
 
   dynamic dioResultJson = '';
   List courses = [];
@@ -64,8 +67,6 @@ class _TimetablePageState extends State<TimetablePage> {
     }
   """;
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,7 +84,10 @@ class _TimetablePageState extends State<TimetablePage> {
           IconButton(
             icon: Icon(Icons.person),
             onPressed: () {
-              // 사용자 정보 페이지로 네비게이션 (추후 구현 필요)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MyPage()),
+              );
             },
           ),
         ],
@@ -164,7 +168,7 @@ class _TimetablePageState extends State<TimetablePage> {
                 return Query(
                   options: QueryOptions(document: gql(query)),
                   builder: (result, {refetch, fetchMore}) {
-                    if(result.isLoading) {
+                    if (result.isLoading) {
                       return CircularProgressIndicator();
                     }
                     courses = result.data!['categories']['courses'];
@@ -186,7 +190,7 @@ class _TimetablePageState extends State<TimetablePage> {
                             Text('${course['place']}'),
                             Text('${course['creditDetail']}'),
                             Text('${course['limit']}'),
-                            TextButton(onPressed: (){}, child: Text('추가')),
+                            TextButton(onPressed: () {}, child: Text('추가')),
                           ],
                         ),
                       );
@@ -209,14 +213,86 @@ class _TimetablePageState extends State<TimetablePage> {
           Text('Step 2. 시간표 제작', style: TextStyle(fontWeight: FontWeight.w700)),
           Container(
               height: 150,
-              decoration: BoxDecoration(color: Colors.orange),
+              decoration: BoxDecoration(color: Colors.brown),
               child: Text('장바구니')), //장바구니
-          ElevatedButton(onPressed: () {}, child: Text('제작')),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  minimumSize: Size(150, 50), backgroundColor: Colors.orange),
+              onPressed: () {},
+              child: Text(
+                '제작',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              )),
           Container(
-            height: 500,
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('제작결과'),
-          ), //제작 결과(경우의 수)
+              height: 500,
+              margin: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: Scaffold(
+                appBar: AppBar(
+                  backgroundColor: Colors.white,
+                  actions: [
+                    SearchBar(
+                      trailing: [
+                        Icon(Icons.search),
+                      ],
+                      elevation: MaterialStatePropertyAll(0),
+                      backgroundColor: MaterialStatePropertyAll(Colors.white),
+                      side: MaterialStatePropertyAll(
+                          BorderSide(color: Colors.blue, width: 2)),
+                      constraints: BoxConstraints(maxWidth: 200),
+                      //padding: MaterialStatePropertyAll(EdgeInsets.all(10)),
+                      hintText: "결과 내 검색",
+                      hintStyle: MaterialStatePropertyAll(
+                          TextStyle(color: Colors.grey.shade600)),
+                    )
+                  ],
+                ),
+                body: SizedBox(),
+                bottomNavigationBar: BottomAppBar(
+                  padding: EdgeInsets.all(10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '페이지 당 결과 수:',
+                        style: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      DropdownButton(
+                          value: _selectedRpp,
+                          items: _rowsperPages.map(
+                            (value) {
+                              return DropdownMenuItem(
+                                value: value,
+                                child: Text(value),
+                              );
+                            },
+                          ).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedRpp = value.toString();
+                            });
+                          }),
+                      Text('결과 인덱스(ex.1-20 of 55 )'),
+                      IconButton(
+                          icon: Icon(Icons.arrow_back_rounded),
+                          onPressed: () {}),
+                      IconButton(
+                          icon: Icon(Icons.arrow_forward_rounded),
+                          onPressed: () {}),
+                    ],
+                  ),
+                ),
+              )), //제작 결과(경우의 수)
         ],
       ),
     );

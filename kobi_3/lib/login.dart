@@ -445,7 +445,7 @@ class _LoginState extends State<Login> {
                       },
                     ),
                   ),
-                  obscureText: _isObscure,
+                  obscureText: !_isObscure,
                   controller: _pwController,
                 ),
               ),
