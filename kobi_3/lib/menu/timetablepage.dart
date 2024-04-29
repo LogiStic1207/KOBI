@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
-import 'options.dart';
 
+
+import 'package:graphql_flutter/graphql_flutter.dart';import 'options.dart';
 import '/chatbotpage.dart';
 import 'package:flutter/material.dart';
 //import './exception_handlers.dart';
@@ -34,6 +35,36 @@ class _TimetablePageState extends State<TimetablePage> {
     '융합학과'
   ];
   var _selectedDepartment = '학부 선택';
+
+  dynamic dioResultJson = '';
+  List courses = [];
+  static String query = """
+    query {
+      categories {
+        id
+        name
+        isCollege
+        courses{
+          id
+          name
+          professor
+          grade
+          credit
+          type1
+          type2
+          targetDepartment
+          target
+          time
+          place
+          creditDetail
+          limit
+          timeData
+        }
+      }
+    }
+  """;
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -127,12 +158,54 @@ class _TimetablePageState extends State<TimetablePage> {
                   _selectedDepartment = value.toString();
                 });
               }),
-          ElevatedButton(onPressed: () {}, child: Text('조회')),
-          Container(
-            height: 500,
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('조회결과'),
-          ), //조회 결과
+          ElevatedButton(
+            onPressed: () async {
+              Widget build(BuildContext context) {
+                return Query(
+                  options: QueryOptions(document: gql(query)),
+                  builder: (result, {refetch, fetchMore}) {
+                    if(result.isLoading) {
+                      return CircularProgressIndicator();
+                    }
+                    courses = result.data!['categories']['courses'];
+                    List<Widget> courseInfo = courses.map<Widget>((course) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            Text('${course['id']}'),
+                            Text('${course['name']}'),
+                            Text('${course['professor']}'),
+                            Text('${course['grade']}'),
+                            Text('${course['credit']}'),
+                            Text('${course['type1']}'),
+                            Text('${course['type2']}'),
+                            Text('${course['targetDepartment']}'),
+                            Text('${course['target']}'),
+                            Text('${course['time']}'),
+                            Text('${course['place']}'),
+                            Text('${course['creditDetail']}'),
+                            Text('${course['limit']}'),
+                            TextButton(onPressed: (){}, child: Text('추가')),
+                          ],
+                        ),
+                      );
+                    }).toList();
+
+                    return ListView(
+                      children: courseInfo,
+                    );
+                  },
+                );
+              }
+            },
+            child: Text('조회'),
+          ),
+          //Container(
+          //  height: 500,
+          //  decoration: BoxDecoration(color: Colors.blue),
+          //  child: Text('조회결과'),
+          //), //조회 결과
           Text('Step 2. 시간표 제작', style: TextStyle(fontWeight: FontWeight.w700)),
           Container(
               height: 150,
