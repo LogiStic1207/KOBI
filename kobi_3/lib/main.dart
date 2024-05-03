@@ -10,7 +10,7 @@ void main() async {
 class Config{
   
   static final HttpLink httpLink = HttpLink(
-    'http://192.168.219.101:4000/',
+    'http://localhost:4000/',
   );
   static final AuthLink authLink = AuthLink(
     getToken: () async => 'Bearer <PERSONAL_TOKEN_KEY>',
