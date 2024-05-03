@@ -3,9 +3,30 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import './login.dart';
 
 void main() async {
+  await initHiveForFlutter();
+
   runApp(MaterialApp(home: MyApp()));
 }
+class Config{
+  
+  static final HttpLink httpLink = HttpLink(
+    'http://192.168.219.101:4000/',
+  );
+  static final AuthLink authLink = AuthLink(
+    getToken: () async => 'Bearer <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>',
+  );
+  static final Link link = authLink.concat(httpLink);
 
+  static ValueNotifier<GraphQLClient> initClient() {
+    ValueNotifier<GraphQLClient> client = ValueNotifier(
+      GraphQLClient(
+        cache: GraphQLCache(store: HiveStore()),
+        link: link
+      )
+    );
+    return client;
+  }
+}
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -14,37 +35,16 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final ValueNotifier<GraphQLClient> client;
+  //late final ValueNotifier<GraphQLClient> client;
 
   @override
   void initState() {
     super.initState();
-    final HttpLink httpLink = HttpLink(
-      'http://localhost:3000/course-schedule', // endpoint 등록
-    );
-
-    var authLink = AuthLink(
-      getToken: () async => 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-      // OR
-      // getToken: () => 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-    ); // 인증 토큰이 있다면 등록
-
-    final Link link = authLink.concat(httpLink);
-
-    var graphQLClient = GraphQLClient(
-      link: link,
-      cache: GraphQLCache(
-        store: InMemoryStore(),
-        partialDataPolicy: PartialDataCachePolicy.accept,
-      ),
-    );
-
-    client = ValueNotifier(graphQLClient);
   }
   @override
   Widget build(BuildContext context) {
     return GraphQLProvider(
-      client: client,
+      client: Config.initClient(),
       child: MaterialApp(
         title: 'KOBI: 코리아텍 비서',
         home: Scaffold(
