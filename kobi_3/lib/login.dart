@@ -123,7 +123,10 @@ class _LoginState extends State<Login> {
                 builder: (_, isLoading, __) => isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: _loginRequest,
+                        onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ChatBotPage())),
                         child: const Text('로그인',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                       ),

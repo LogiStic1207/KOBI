@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
@@ -26,20 +27,44 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Future<void> _simulateBotResponse(String message) async {
-    await Future.delayed(Duration(seconds: 2));
-    setState(() {
-      _messages.insert(0, {"text": "이것은 챗봇의 응답입니다.", "isBot": true});
-      _isSending = false;
-    });
+    GraphQLClient client = GraphQLProvider.of(context).value;
+    String query = """
+    query GetResponse(\$message: String!) {
+      getResponse(message: \$message) {
+        text
+      }
+    }
+    """;
+    final QueryOptions options = QueryOptions(
+      document: gql(query),
+      variables: {
+        'message': message,
+      },
+    );
+    final QueryResult result = await client.query(options);
+
+    if (!result.hasException) {
+      final responseText =
+          result.data?['getResponse']?['text'] ?? "No response text.";
+      setState(() {
+        _messages.insert(0, {"text": responseText, "isBot": true});
+        _isSending = false;
+      });
+    } else {
+      setState(() {
+        _messages.insert(0, {"text": "오류: 응답을 가져오는 데 실패했습니다.", "isBot": true});
+        _isSending = false;
+      });
+    }
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> message) {
     bool isBot = message["isBot"];
-    return Container(
-      padding: EdgeInsets.all(8),
+    return Align(
       alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        margin: EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: isBot ? Colors.grey[300] : Colors.blue[300],
@@ -52,119 +77,54 @@ class _ChatBotPageState extends State<ChatBotPage> {
     );
   }
 
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        children: [
+          DrawerHeader(
+            child: Text('메뉴', style: TextStyle(color: Colors.white)),
+            decoration: BoxDecoration(color: Colors.blue),
+          ),
+          ListTile(
+              title: Text('시간표 제작'),
+              onTap: () => Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => TimetablePage()))),
+          ListTile(
+              title: Text('설정'),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => OptionsPage()))),
+          Divider(),
+          ListTile(title: Text('로그아웃'), onTap: () {/* Logout logic */}),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("KOBI"),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            );
-          },
-        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MyPage()),
-              );
-              // User info navigation logic will be implemented later
-            },
-          ),
+              icon: Icon(Icons.person),
+              onPressed: () => Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => MyPage()))),
         ],
       ),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  const SizedBox(
-                    height: 100.0,
-                    child: DrawerHeader(
-                      child: Text('메뉴'),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text('시간표 제작'),
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                            builder: (context) => TimetablePage()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    title: Text('설정'),
-                    onTap: () {
-                      // Settings page navigation - to be implemented later
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => OptionsPage()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(20),
-              height: 300,
-              width: 300,
-              alignment: Alignment.topCenter,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5.0),
-                  border: Border.all(color: Colors.black),
-                  color: Colors.blue),
-              child: Text('장바구니'),
-            ),
-            Container(
-              width:
-                  150, // Use double.infinity to span the full width of the drawer
-              padding: EdgeInsets.all(4),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                    textStyle: TextStyle(
-                      color: Colors.black, // Set text color to black
-                    )),
-                onPressed: () {
-                  // Implement logout logic
-                },
-                child: Text(
-                  '로그아웃',
-                  style: TextStyle(
-                    color: Colors.black, // Ensure text color is black
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               reverse: true,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) =>
-                  _buildMessageBubble(_messages[index]),
+              itemCount: _messages.length + (_isSending ? 1 : 0),
+              itemBuilder: (context, index) => index == 0 && _isSending
+                  ? Center(child: CircularProgressIndicator())
+                  : _buildMessageBubble(
+                      _messages[index - (_isSending ? 1 : 0)]),
             ),
           ),
-          _isSending ? LinearProgressIndicator() : SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
