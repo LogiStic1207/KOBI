@@ -13,7 +13,7 @@ class Config{
     'http://192.168.219.101:4000/',
   );
   static final AuthLink authLink = AuthLink(
-    getToken: () async => 'Bearer <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>',
+    getToken: () async => 'Bearer <PERSONAL_TOKEN_KEY>',
   );
   static final Link link = authLink.concat(httpLink);
 
