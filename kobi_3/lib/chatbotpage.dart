@@ -14,6 +14,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
   List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
 
+  // Define the size variables
+  double buttonWidth = 250.0;
+  double buttonHeight = 50.0;
+
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
@@ -79,22 +83,53 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
   Widget _buildDrawer() {
     return Drawer(
-      child: ListView(
+      child: Column(
         children: [
-          DrawerHeader(
-            child: Text('메뉴', style: TextStyle(color: Colors.white)),
-            decoration: BoxDecoration(color: Colors.blue),
+          Expanded(
+            child: ListView(
+              children: [
+                Container(
+                  height: 65,
+                  child: DrawerHeader(
+                    child: Text('메뉴', style: TextStyle(color: Colors.white)),
+                    decoration: BoxDecoration(color: Colors.blue),
+                  ),
+                ),
+                ListTile(
+                    title: Text('시간표 제작'),
+                    onTap: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => TimetablePage()))),
+                ListTile(
+                    title: Text('설정'),
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => OptionsPage()))),
+                Divider(),
+              ],
+            ),
           ),
-          ListTile(
-              title: Text('시간표 제작'),
-              onTap: () => Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (context) => TimetablePage()))),
-          ListTile(
-              title: Text('설정'),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => OptionsPage()))),
-          Divider(),
-          ListTile(title: Text('로그아웃'), onTap: () {/* Logout logic */}),
+          Container(
+            width: buttonWidth,
+            height: buttonHeight,
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: ListTile(
+                title: Text(
+                  '로그아웃',
+                  style: TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                onTap: () {/* Logout logic */},
+              ),
+            ),
+          ),
         ],
       ),
     );
