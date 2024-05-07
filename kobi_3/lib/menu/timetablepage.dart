@@ -34,9 +34,10 @@ class _TimetablePageState extends State<TimetablePage> {
   """;
 
   String _selectedDepartment = 'HRD학과';
-  List<dynamic> allCourses = [];
-  List<dynamic> filteredCourses = [];
+  List<Map<String, dynamic>> allCourses = [];
+  List<Map<String, dynamic>> filteredCourses = [];
   List<Map<String, dynamic>> cartItems = [];
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -45,18 +46,8 @@ class _TimetablePageState extends State<TimetablePage> {
       appBar: AppBar(
         title: Text('강의 조회 및 시간표 제작'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: _showSearchDialog,
-          ),
           Stack(
             children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.shopping_cart),
-                onPressed: () {
-                  _showCartDialog();
-                },
-              ),
               if (cartItems.isNotEmpty)
                 Positioned(
                   right: 0,
@@ -196,41 +187,113 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Widget _buildCourseTable(List courses) {
-    double screenHeight = MediaQuery.of(context).size.height; // 화면의 높이를 가져옴
+    double screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      height: screenHeight / 2, // 컨테이너의 높이를 화면의 절반으로 설정
-      padding: EdgeInsets.all(8),
-      margin: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: Offset(0, 3),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width,
-          ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: DataTable(
-              columns: _buildColumns(),
-              rows: courses
-                  .map((course) => _buildRow(course as Map<String, dynamic>))
-                  .toList(),
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              labelText: 'Search Courses',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => setState(() {
+                  filteredCourses = allCourses
+                      .where((course) => course['name']
+                          .toLowerCase()
+                          .contains(_searchController.text.toLowerCase()))
+                      .toList();
+                }),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ),
-      ),
+        Expanded(
+          flex: 2, // Takes 2/3 of the available space
+          child: Container(
+            height: screenHeight / 3,
+            padding: EdgeInsets.all(8),
+            margin: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: MediaQuery.of(context).size.width,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: DataTable(
+                    columns: _buildColumns(),
+                    rows: courses.map((course) => _buildRow(course)).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 1, // Takes 1/3 of the available space
+          child: Container(
+            padding: EdgeInsets.all(8),
+            margin: EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Text('Shopping Cart',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(
+                            '${cartItems[index]['name']} ${cartItems[index]['id']}'),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              cartItems.removeAt(index);
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -261,7 +324,7 @@ class _TimetablePageState extends State<TimetablePage> {
 
   void removeFromCart(Map<String, dynamic> course) {
     setState(() {
-      cartItems.remove(course);
+      cartItems.remove(course); // 장바구니 목록에서 해당 과목을 제거
     });
   }
 
@@ -311,52 +374,21 @@ class _TimetablePageState extends State<TimetablePage> {
                 return ListTile(
                   title: Text(
                       '${cartItems[index]['name']} ${cartItems[index]['id']}'),
+                  trailing: IconButton(
+                    icon:
+                        Icon(Icons.indeterminate_check_box, color: Colors.red),
+                    onPressed: () {
+                      removeFromCart(cartItems[index]);
+                      Navigator.of(context)
+                          .pop(); // 장바구니에서 항목을 제거하고 다이얼로그를 닫습니다.
+                      _showCartDialog(); // 변경된 장바구니를 다시 보여주기 위해 다이얼로그를 다시 호출합니다.
+                    },
+                  ),
                 );
               },
             ),
           ),
           actions: [
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSearchDialog() {
-    String searchQuery = ""; // 검색어를 저장할 변수
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Search Course'),
-          content: TextField(
-            onChanged: (value) {
-              searchQuery = value; // 사용자가 입력한 값을 searchQuery에 저장
-            },
-            decoration: InputDecoration(
-              hintText: "Enter course name",
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text('Search'), // 검색 버튼 추가
-              onPressed: () {
-                setState(() {
-                  filteredCourses = allCourses
-                      .where((course) => course['name']
-                          .toLowerCase()
-                          .contains(searchQuery.toLowerCase()))
-                      .toList();
-                });
-                Navigator.of(context).pop(); // 검색 후 다이얼로그 닫기
-              },
-            ),
             TextButton(
               child: Text('Close'),
               onPressed: () {

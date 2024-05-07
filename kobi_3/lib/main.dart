@@ -10,10 +10,10 @@ void main() async {
 
 class Config {
   static final HttpLink httpLink = HttpLink(
-    'http://localhost:4000/',
+    'http://localhost:4000/graphql',
   );
   static final AuthLink authLink = AuthLink(
-    getToken: () async => 'Bearer <PERSONAL_TOKEN_KEY>',
+    getToken: () async => 'Bearer <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>',
   );
   static final Link link = authLink.concat(httpLink);
 

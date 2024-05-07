@@ -15,7 +15,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
-  String res = 'hello world';
+  // String res = 'hello world';
   // Define the size variables
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
@@ -29,14 +29,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
       });
 
       // Send user message to the server and wait for the response
-      var url = 'http://172.19.99.105:5000/transform';
+      var url = 'http://218.150.183.164:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'text': text}));
+          body: jsonEncode({'query': text}));
       _controller.clear();
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
+        print(responseData);
         setState(() {
           _messages
               .insert(0, {"text": responseData['response'], "isBot": true});
@@ -50,38 +51,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
           _isSending = false;
         });
       }
-    }
-  }
-
-  Future<void> _simulateBotResponse(String message) async {
-    GraphQLClient client = GraphQLProvider.of(context).value;
-    String query = """
-    query GetResponse(\$message: String!) {
-      getResponse(message: \$message) {
-        text
-      }
-    }
-    """;
-    final QueryOptions options = QueryOptions(
-      document: gql(query),
-      variables: {
-        'message': message,
-      },
-    );
-    final QueryResult result = await client.query(options);
-
-    if (!result.hasException) {
-      final responseText =
-          result.data?['getResponse']?['text'] ?? "No response text.";
-      setState(() {
-        _messages.insert(0, {"text": responseText, "isBot": true});
-        _isSending = false;
-      });
-    } else {
-      setState(() {
-        _messages.insert(0, {"text": "오류: 응답을 가져오는 데 실패했습니다.", "isBot": true});
-        _isSending = false;
-      });
     }
   }
 
