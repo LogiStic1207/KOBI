@@ -15,9 +15,10 @@ class ChatBotPage extends StatefulWidget {
 class _ChatBotPageState extends State<ChatBotPage> {
   String _intent = "위치";
   String _ner = "해울관";
+  String _answer = "초기 응답입니다.";
   final TextEditingController _controller = TextEditingController();
-  //final List<Map<String, dynamic>> _messages = [];
-  bool _isSending = false;
+  final List<Map<String, dynamic>> _messages = [];
+  //bool _isSending = false;
   // String res = 'hello world';
   // Define the size variables
   double buttonWidth = 250.0;
@@ -36,8 +37,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        //_messages.insert(0, {"text": text, "isBot": false});
-        _isSending = true;
+        _messages.add({"text": text, "isBot": false});
+        //_isSending = true;
       });
 
       // Send user message to the server and wait for the response
@@ -52,40 +53,39 @@ class _ChatBotPageState extends State<ChatBotPage> {
         print(responseData);
 
         setState(() {
-          _intent = responseData['Intent'];
-          _ner = responseData['Ner'][0];
-          //_messages.insert(0, {"text": responseData['Ner'][0], "isBot": true});
-          _isSending = false;
+          _answer = responseData['Query'];
+          // _intent = responseData['Intent'];
+          // _ner = responseData['Ner'][0];
+          _messages.add({"text": _answer, "isBot": true});
+          //_isSending = false;
         });
-        print(_intent);
-        print(_ner);
+        print(_answer);
       } else {
         print('Failed to send message');
         setState(() {
-          // _messages
-          //     .insert(0, {"text": "Failed to fetch response", "isBot": true});
-          _isSending = false;
+          _messages.add({"text": "Failed to fetch response", "isBot": true});
+          //_isSending = false;
         });
       }
     }
   }
 
-  Widget _buildMessageBubble(String message) {
-    //bool isBot = message["isBot"];
+  Widget _buildMessageBubble(Map<String, dynamic> _message) {
+    bool isBot = _message["isBot"];
     return Align(
-        //alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
+        alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
         child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      margin: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.blue[300],
-      ),
-      child: Text(
-        message,
-        style: TextStyle(fontSize: 16),
-      ),
-    ));
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: isBot ? Colors.grey[200] : Colors.blue[300],
+          ),
+          child: Text(
+            _message['text'],
+            style: TextStyle(fontSize: 16),
+          ),
+        ));
   }
 
   Widget _buildDrawer() {
@@ -158,39 +158,47 @@ class _ChatBotPageState extends State<ChatBotPage> {
       body: Column(
         children: [
           Container(
-            height: 500,
-            child: Query(
-              options: QueryOptions(
-                  document: gql(query),
-                  variables: {"_intent": _intent, "_ner": _ner}),
-              builder: (result, {fetchMore, refetch}) {
-                if (result.isLoading) {
-                  return CircularProgressIndicator();
-                }
-                print(query);
-                String answer = result.data!["answer"]["answer"];
-                //print(result.data!["answer"]["answer"]);
-                if (answer == null) {
-                  return Text('No answer that ner');
-                }
+              height: 500,
+              child: ListView.builder(
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    return _buildMessageBubble(_messages[index]);
+                  }
 
-                //_messages.insert(0, {"text": answer, "isBot": true});
-                return ListView.builder(
-                  //final Map<String, dynamic> message;
-                  itemCount: 1,
-                  itemBuilder: (context, index) => index == 0 && _isSending
-                      ? Center(child: CircularProgressIndicator())
-                      : _buildMessageBubble(answer),
-                );
-              },
-            ),
-          ),
+                  //Map<String, dynamic> msg = _messages[index];
+                  )),
+          // child: Query(
+          //   options: QueryOptions(
+          //       document: gql(query),
+          //       variables: {"_intent": _intent, "_ner": _ner}),
+          //   builder: (result, {fetchMore, refetch}) {
+          //     if (result.isLoading) {
+          //       return CircularProgressIndicator();
+          //     }
+          //     print(query);
+          //     String answer = result.data!["answer"]["answer"];
+          //     //print(result.data!["answer"]["answer"]);
+          //     if (answer == null) {
+          //       return Text('No answer that ner');
+          //     }
+
+          //     //_messages.insert(0, {"text": answer, "isBot": true});
+          //     return ListView.builder(
+          //       //final Map<String, dynamic> message;
+          //       itemCount: 1,
+          //       itemBuilder: (context, index) => index == 0 && _isSending
+          //           ? Center(child: CircularProgressIndicator())
+          //           : _buildMessageBubble(answer),
+          //     );
+          //   },
+          // ),
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    decoration: InputDecoration(hintText: "메시지를 입력하세요..."),
                   ),
                 ),
                 IconButton(
