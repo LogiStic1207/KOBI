@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:tuple/tuple.dart';
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -13,14 +11,12 @@ class ChatBotPage extends StatefulWidget {
 }
 
 class _ChatBotPageState extends State<ChatBotPage> {
-  String _intent = "위치";
-  String _ner = "해울관";
+  //String _intent = "위치";
+  //String _ner = "해울관";
   String _answer = "초기 응답입니다.";
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
-  //bool _isSending = false;
-  // String res = 'hello world';
-  // Define the size variables
+
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
 
@@ -54,6 +50,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
         setState(() {
           _answer = responseData['Query'];
+          //_intent = responseData['Intent'];
           // _intent = responseData['Intent'];
           // _ner = responseData['Ner'][0];
           _messages.add({"text": _answer, "isBot": true});
@@ -163,35 +160,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
                     return _buildMessageBubble(_messages[index]);
-                  }
-
-                  //Map<String, dynamic> msg = _messages[index];
-                  )),
-          // child: Query(
-          //   options: QueryOptions(
-          //       document: gql(query),
-          //       variables: {"_intent": _intent, "_ner": _ner}),
-          //   builder: (result, {fetchMore, refetch}) {
-          //     if (result.isLoading) {
-          //       return CircularProgressIndicator();
-          //     }
-          //     print(query);
-          //     String answer = result.data!["answer"]["answer"];
-          //     //print(result.data!["answer"]["answer"]);
-          //     if (answer == null) {
-          //       return Text('No answer that ner');
-          //     }
-
-          //     //_messages.insert(0, {"text": answer, "isBot": true});
-          //     return ListView.builder(
-          //       //final Map<String, dynamic> message;
-          //       itemCount: 1,
-          //       itemBuilder: (context, index) => index == 0 && _isSending
-          //           ? Center(child: CircularProgressIndicator())
-          //           : _buildMessageBubble(answer),
-          //     );
-          //   },
-          // ),
+                  })),
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(children: [
@@ -207,9 +176,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
               ]))
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _sendMessage,
-      // ),
     );
   }
 }
