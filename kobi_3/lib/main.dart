@@ -7,12 +7,12 @@ void main() async {
   await initHiveForFlutter(); // Initialize Hive for GraphQL cache
 
   final HttpLink httpLink = HttpLink(
-    'http://localhost:3000/graphql', // Correct the endpoint if necessary
+    'http://218.150.183.164:4000/graphql', // Correct the endpoint if necessary
   );
 
   final AuthLink authLink = AuthLink(
     getToken: () async =>
-        'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>', // Ensure your token is fetched correctly
+        'Bearer <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>', // Ensure your token is fetched correctly
   );
 
   final Link link = authLink.concat(httpLink);
