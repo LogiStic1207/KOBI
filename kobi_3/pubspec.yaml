@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   graphql_flutter: ^5.2.0-beta.6
+  tuple: ^2.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

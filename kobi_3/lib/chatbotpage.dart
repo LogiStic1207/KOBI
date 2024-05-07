@@ -5,6 +5,7 @@ import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tuple/tuple.dart';
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -12,19 +13,30 @@ class ChatBotPage extends StatefulWidget {
 }
 
 class _ChatBotPageState extends State<ChatBotPage> {
+  String _intent = "위치";
+  String _ner = "해울관";
   final TextEditingController _controller = TextEditingController();
-  List<Map<String, dynamic>> _messages = [];
+  //final List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
   // String res = 'hello world';
   // Define the size variables
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
 
+  String query = r"""
+        query get($_intent: String!, $_ner: String!){
+          answer(intent:$_intent, ner:$_ner){
+            answer
+            image
+          }
+        }
+  """;
+
   void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        _messages.insert(0, {"text": text, "isBot": false});
+        //_messages.insert(0, {"text": text, "isBot": false});
         _isSending = true;
       });
 
@@ -38,39 +50,42 @@ class _ChatBotPageState extends State<ChatBotPage> {
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         print(responseData);
+
         setState(() {
-          _messages
-              .insert(0, {"text": responseData['response'], "isBot": true});
+          _intent = responseData['Intent'];
+          _ner = responseData['Ner'][0];
+          //_messages.insert(0, {"text": responseData['Ner'][0], "isBot": true});
           _isSending = false;
         });
+        print(_intent);
+        print(_ner);
       } else {
         print('Failed to send message');
         setState(() {
-          _messages
-              .insert(0, {"text": "Failed to fetch response", "isBot": true});
+          // _messages
+          //     .insert(0, {"text": "Failed to fetch response", "isBot": true});
           _isSending = false;
         });
       }
     }
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message) {
-    bool isBot = message["isBot"];
+  Widget _buildMessageBubble(String message) {
+    //bool isBot = message["isBot"];
     return Align(
-      alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        margin: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: isBot ? Colors.grey[300] : Colors.blue[300],
-        ),
-        child: Text(
-          message["text"],
-          style: TextStyle(fontSize: 16),
-        ),
+        //alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
+        child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.blue[300],
       ),
-    );
+      child: Text(
+        message,
+        style: TextStyle(fontSize: 16),
+      ),
+    ));
   }
 
   Widget _buildDrawer() {
@@ -142,41 +157,51 @@ class _ChatBotPageState extends State<ChatBotPage> {
       drawer: _buildDrawer(),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _messages.length + (_isSending ? 1 : 0),
-              itemBuilder: (context, index) => index == 0 && _isSending
-                  ? Center(child: CircularProgressIndicator())
-                  : _buildMessageBubble(
-                      _messages[index - (_isSending ? 1 : 0)]),
+          Container(
+            height: 500,
+            child: Query(
+              options: QueryOptions(
+                  document: gql(query),
+                  variables: {"_intent": _intent, "_ner": _ner}),
+              builder: (result, {fetchMore, refetch}) {
+                if (result.isLoading) {
+                  return CircularProgressIndicator();
+                }
+                print(query);
+                String answer = result.data!["answer"]["answer"];
+                //print(result.data!["answer"]["answer"]);
+                if (answer == null) {
+                  return Text('No answer that ner');
+                }
+
+                //_messages.insert(0, {"text": answer, "isBot": true});
+                return ListView.builder(
+                  //final Map<String, dynamic> message;
+                  itemCount: 1,
+                  itemBuilder: (context, index) => index == 0 && _isSending
+                      ? Center(child: CircularProgressIndicator())
+                      : _buildMessageBubble(answer),
+                );
+              },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "메시지를 입력하세요...",
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                    ),
-                    onSubmitted: (text) => _sendMessage(),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
-          ),
+                    onPressed: _sendMessage,
+                    icon: Icon(Icons.send, color: Colors.blue))
+              ]))
         ],
       ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _sendMessage,
+      // ),
     );
   }
 }
