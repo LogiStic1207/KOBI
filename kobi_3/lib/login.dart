@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import './exception_handlers.dart';
+import 'package:dio/dio.dart';
 //import 'dart:html' as html;
 
 class Login extends StatefulWidget {
@@ -13,7 +14,11 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  dynamic dioResultJson ='';
+  String dioResultValue = '';
+  String _userInfo = "초기";
   bool _isObscure = false;
+  
   void _showToast(BuildContext context, String message) {
     final scaffold = ScaffoldMessenger.of(context);
 
@@ -377,14 +382,19 @@ class _LoginState extends State<Login> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(_userInfo),
+              //Text('json: ${dioResultJson}'),
+              //Text('값: ${dioResultValue}'),
               Image.asset('assets/logo.png',
                   width: 250, height: 200, fit: BoxFit.fill), // 로고 이미지
               SizedBox(height: 20), // 로고와 제목 사이의 간격

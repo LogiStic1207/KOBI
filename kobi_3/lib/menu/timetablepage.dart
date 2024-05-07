@@ -20,52 +20,78 @@ class TimetablePage extends StatefulWidget {
   _TimetablePageState createState() => _TimetablePageState();
 }
 
+
 class _TimetablePageState extends State<TimetablePage> {
-  final _departmentList = [
+  final List<String> categories = [
     '학부 선택',
+    '스마트팩토리융합학과',
     'HRD학과',
-    '컴퓨터공학부',
-    '디자인·건축공학부',
-    '기계공학부',
-    '전기·전자·통신공학부',
-    '에너지신소재화학공학부',
-    '산업경영학부',
-    '메카트로닉스공학부',
+    '강소기업경영학과',
     '고용서비스정책학과',
     '교양학부',
-    '융합학과'
+    '기계공학부',
+    '기계설계공학과',
+    '기전융합공학과',
+    '디자인ㆍ건축공학부',
+    '산업경영학부',
+    '에너지신소재화학공학부',
+    '융합학과',
+    '전기ㆍ전자ㆍ통신공학부'
   ];
-  final _rowsperPages = ['10', '20', '30', '50', '100'];
-  var _selectedDepartment = '학부 선택';
-  var _selectedRpp = '10';
-
-  dynamic dioResultJson = '';
-  List courses = [];
-  static String query = """
-    query {
-      categories {
+  String? _selectedCategory;
+  Future<List<dynamic>>? _courses;
+  static String getPostByID = r""" 
+    query getCoursesByCategory($categoryId: String) {
+      courses(categoryId: $categoryId){
         id
         name
-        isCollege
-        courses{
-          id
-          name
-          professor
-          grade
-          credit
-          type1
-          type2
-          targetDepartment
-          target
-          time
-          place
-          creditDetail
-          limit
-          timeData
-        }
+        professor
+        grade
+        credit
+        type1
+        type2
+        targetDepartment
+        target
+        time
+        place
+        creditDetail
+        limit
+        timeData
       }
     }
   """;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = categories[0];
+    //_courses = fetchCourses( _selectedCategory!);
+  }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // GraphQL 클라이언트를 안전하게 호출할 수 있는 위치
+    if (_courses == null) { // 조건을 추가하여 불필요한 재호출 방지
+      _courses = fetchCourses(_selectedCategory!);
+    }
+  }
+
+  Future<List<dynamic>> fetchCourses(String categoryId) async {
+    final client = GraphQLProvider.of(context).value;
+    final QueryOptions options = QueryOptions(
+      document: gql(getPostByID),
+      variables: <String ,dynamic>{
+        'categoryId': categoryId,
+      }
+    );
+    final result = await client.query(options);
+    if (result.hasException) {
+      print(result.exception.toString());
+      return [];
+    }
+    return result.data?['courses'] as List<dynamic>;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -147,36 +173,84 @@ class _TimetablePageState extends State<TimetablePage> {
         padding: EdgeInsets.all(5.0),
         children: [
           Text('Step 1. 강의 조회', style: TextStyle(fontWeight: FontWeight.w700)),
-          DropdownButton(
-              value: _selectedDepartment,
-              items: _departmentList.map(
-                (value) {
-                  return DropdownMenuItem(
-                    value: value,
-                    child: Text(value),
-                  );
-                },
-              ).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedDepartment = value.toString();
-                });
-              }),
+          DropdownButton<String>(
+            value: _selectedCategory,
+            items: categories.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCategory = newValue;
+                _courses = fetchCourses(_selectedCategory!);
+              });
+            },
+          ),
           ElevatedButton(
-            onPressed: () async {
-              Widget build(BuildContext context) {
-                return Query(
-                  options: QueryOptions(document: gql(query)),
-                  builder: (result, {refetch, fetchMore}) {
-                    if (result.isLoading) {
-                      return CircularProgressIndicator();
-                    }
-                    courses = result.data!['categories']['courses'];
-                    List<Widget> courseInfo = courses.map<Widget>((course) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(150, 50), backgroundColor: Colors.orange),
+            onPressed: _selectedCategory == '학부 선택' ? null : () {
+              setState(() {
+                _courses = fetchCourses(_selectedCategory!);
+              });
+            },
+            child: Text(
+              '조회',
+              style: TextStyle(fontWeight: FontWeight.w600),),
+          ),
+          Container(
+            height: 500,
+            margin: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3), // changes position of shadow
+                ),
+              ],
+            ),
+            child: Scaffold(
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                actions: [
+                  SearchBar(
+                    trailing: [
+                      Icon(Icons.search),
+                    ],
+                    elevation: MaterialStatePropertyAll(0),
+                    backgroundColor: MaterialStatePropertyAll(Colors.white),
+                    side: MaterialStatePropertyAll(
+                        BorderSide(color: Colors.blue, width: 2)),
+                    constraints: BoxConstraints(maxWidth: 200),
+                    //padding: MaterialStatePropertyAll(EdgeInsets.all(10)),
+                    hintText: "결과 내 검색",
+                    hintStyle: MaterialStatePropertyAll(
+                        TextStyle(color: Colors.grey.shade600)),
+                  )
+                ],
+              ),
+              body: _courses == null ? CircularProgressIndicator() : FutureBuilder<List<dynamic>>(
+                future: _courses,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    //print("Error: ${snapshot.error}");
+                    return Text("Error: ${snapshot.error}");
+                  } else if (snapshot.hasData) {
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final course = snapshot.data![index];
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(children: [
+                            _resultBoxHeader(),
                             Text('${course['id']}'),
                             Text('${course['name']}'),
                             Text('${course['professor']}'),
@@ -190,31 +264,24 @@ class _TimetablePageState extends State<TimetablePage> {
                             Text('${course['place']}'),
                             Text('${course['creditDetail']}'),
                             Text('${course['limit']}'),
-                            TextButton(onPressed: () {}, child: Text('추가')),
-                          ],
-                        ),
-                      );
-                    }).toList();
-
-                    return ListView(
-                      children: courseInfo,
+                            Text('${course['timeData']}'),
+                          ],)
+                        );
+                      },
                     );
-                  },
-                );
-              }
-            },
-            child: Text('조회'),
+                  } else {
+                    return Text("No data found.");
+                  }
+                },
+              ),
+            ),
           ),
-          //Container(
-          //  height: 500,
-          //  decoration: BoxDecoration(color: Colors.blue),
-          //  child: Text('조회결과'),
-          //), //조회 결과
           Text('Step 2. 시간표 제작', style: TextStyle(fontWeight: FontWeight.w700)),
           Container(
               height: 150,
               decoration: BoxDecoration(color: Colors.brown),
-              child: Text('장바구니')), //장바구니
+              child: Text('장바구니')
+          ), //장바구니
           ElevatedButton(
               style: ElevatedButton.styleFrom(
                   minimumSize: Size(150, 50), backgroundColor: Colors.orange),
@@ -222,79 +289,90 @@ class _TimetablePageState extends State<TimetablePage> {
               child: Text(
                 '제작',
                 style: TextStyle(fontWeight: FontWeight.w600),
-              )),
-          Container(
-              height: 500,
-              margin: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
-                  ),
-                ],
-              ),
-              child: Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Colors.white,
-                  actions: [
-                    SearchBar(
-                      trailing: [
-                        Icon(Icons.search),
-                      ],
-                      elevation: MaterialStatePropertyAll(0),
-                      backgroundColor: MaterialStatePropertyAll(Colors.white),
-                      side: MaterialStatePropertyAll(
-                          BorderSide(color: Colors.blue, width: 2)),
-                      constraints: BoxConstraints(maxWidth: 200),
-                      //padding: MaterialStatePropertyAll(EdgeInsets.all(10)),
-                      hintText: "결과 내 검색",
-                      hintStyle: MaterialStatePropertyAll(
-                          TextStyle(color: Colors.grey.shade600)),
-                    )
-                  ],
-                ),
-                body: SizedBox(),
-                bottomNavigationBar: BottomAppBar(
-                  padding: EdgeInsets.all(10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        '페이지 당 결과 수:',
-                        style: TextStyle(color: Colors.grey.shade400),
-                      ),
-                      DropdownButton(
-                          value: _selectedRpp,
-                          items: _rowsperPages.map(
-                            (value) {
-                              return DropdownMenuItem(
-                                value: value,
-                                child: Text(value),
-                              );
-                            },
-                          ).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRpp = value.toString();
-                            });
-                          }),
-                      Text('결과 인덱스(ex.1-20 of 55 )'),
-                      IconButton(
-                          icon: Icon(Icons.arrow_back_rounded),
-                          onPressed: () {}),
-                      IconButton(
-                          icon: Icon(Icons.arrow_forward_rounded),
-                          onPressed: () {}),
-                    ],
-                  ),
-                ),
-              )), //제작 결과(경우의 수)
+              )
+          ),
+        ]
+      ),
+    );
+  }
+
+}
+
+class _resultBoxHeader extends StatelessWidget {
+  const _resultBoxHeader ({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Text('코드 및 분반'),
+          Text('교과목명'),
+          Text('담당교수'),
+          Text('학년'),
+          Text('학점'),
+          Text('이수구분'),
+          Text('강의구분'),
+          Text('대상학부'),
+          Text('대상'),
+          Text('시간'),
+          Text('장소'),
+          Text('정원'),
+          Text(' '),
         ],
       ),
     );
   }
 }
+/*
+class _resultBox extends StatelessWidget {
+  const _resultBox({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 500,
+      margin: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: Offset(0, 3), // changes position of shadow
+          ),
+        ],
+      ),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          actions: [
+            SearchBar(
+              trailing: [
+                Icon(Icons.search),
+              ],
+              elevation: MaterialStatePropertyAll(0),
+              backgroundColor: MaterialStatePropertyAll(Colors.white),
+              side: MaterialStatePropertyAll(
+                  BorderSide(color: Colors.blue, width: 2)),
+              constraints: BoxConstraints(maxWidth: 200),
+              //padding: MaterialStatePropertyAll(EdgeInsets.all(10)),
+              hintText: "결과 내 검색",
+              hintStyle: MaterialStatePropertyAll(
+                  TextStyle(color: Colors.grey.shade600)),
+            )
+          ],
+        ),
+        body: ListView(
+          children: [
+            _resultBoxHeader(),
+          ],
+        ),
+      ),
+    ); //제작 결과(경우의 수)
+  }
+  
+}
+*/

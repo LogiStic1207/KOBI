@@ -14,37 +14,29 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final ValueNotifier<GraphQLClient> client;
 
+  late GraphQLClient client;
   @override
   void initState() {
     super.initState();
-    final HttpLink httpLink = HttpLink(
-      'http://localhost:3000/course-schedule', // endpoint 등록
-    );
-
-    var authLink = AuthLink(
-      getToken: () async => 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-      // OR
-      // getToken: () => 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-    ); // 인증 토큰이 있다면 등록
-
-    final Link link = authLink.concat(httpLink);
-
-    var graphQLClient = GraphQLClient(
-      link: link,
-      cache: GraphQLCache(
-        store: InMemoryStore(),
-        partialDataPolicy: PartialDataCachePolicy.accept,
-      ),
-    );
-
-    client = ValueNotifier(graphQLClient);
+    client = _initGraphQL();
   }
+
+  GraphQLClient _initGraphQL() {
+    final HttpLink httpLink = HttpLink(
+      "http://218.150.183.164:4000/",
+    );
+
+    return GraphQLClient(
+      cache: GraphQLCache(),
+      link: httpLink,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GraphQLProvider(
-      client: client,
+      client: ValueNotifier<GraphQLClient>(client),
       child: MaterialApp(
         title: 'KOBI: 코리아텍 비서',
         home: Scaffold(
