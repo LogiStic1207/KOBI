@@ -12,10 +12,21 @@ class ChatBotPage extends StatefulWidget {
 }
 
 class _ChatBotPageState extends State<ChatBotPage> {
+  String _intent = "location";
+  String _ner = "해울관";
+
+  String query = r"""
+        query get ($_intent: String!, $_ner: String!) {
+          answer(intent:$_intent, ner:$_ner){
+            answer
+            image
+          }
+        }
+    """;
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
-  String res = 'hello world';
+  List<String> intent_ner = [];
   // Define the size variables
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
@@ -34,7 +45,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
     */
     var url = 'http://172.19.99.105:5000/transform';
     var response = await http.post(
-      
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'text': 'hello world'})
