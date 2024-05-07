@@ -47,14 +47,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
     var response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'text': 'hello world'})
+      body: jsonEncode({'question': 'hello world'})
     );
     print ('Send to Server');
 
     if( response.statusCode == 200) {
       var responseData = jsonDecode(response.body);
       setState(() {
-        res = responseData['response'];
+        _intent = responseData[0];
+        _ner = responseData[1];
       });
 
     } else {
@@ -182,12 +183,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
       ),
       drawer: _buildDrawer(),
       body: ListView.builder(
-        itemCount: 1,
+        itemCount: intent_ner.length,
         itemBuilder: (context, index) {
-          //final msg = res[index];
+          final msg = intent_ner[index];
           //final ans = msg['response'];
           return ListTile(
-            title: Text(res),
+            title: Text(msg),
           );
         } 
       ),
