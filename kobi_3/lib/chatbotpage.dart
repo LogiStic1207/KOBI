@@ -3,6 +3,8 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -13,12 +15,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
-
+  String res = 'hello world';
   // Define the size variables
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
 
-  void _sendMessage() {
+  void _sendMessage() async {
+    /*
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
@@ -28,6 +31,26 @@ class _ChatBotPageState extends State<ChatBotPage> {
       _controller.clear();
       _simulateBotResponse(text);
     }
+    */
+    var url = 'http://172.19.99.105:5000/transform';
+    var response = await http.post(
+      
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'text': 'hello world'})
+    );
+    print ('Send to Server');
+
+    if( response.statusCode == 200) {
+      var responseData = jsonDecode(response.body);
+      setState(() {
+        res = responseData['response'];
+      });
+
+    } else {
+      print('Failed');
+    }
+
   }
 
   Future<void> _simulateBotResponse(String message) async {
@@ -148,42 +171,65 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ],
       ),
       drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _messages.length + (_isSending ? 1 : 0),
-              itemBuilder: (context, index) => index == 0 && _isSending
-                  ? Center(child: CircularProgressIndicator())
-                  : _buildMessageBubble(
-                      _messages[index - (_isSending ? 1 : 0)]),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "메시지를 입력하세요...",
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
-          ),
-        ],
+      body: ListView.builder(
+        itemCount: 1,
+        itemBuilder: (context, index) {
+          //final msg = res[index];
+          //final ans = msg['response'];
+          return ListTile(
+            title: Text(res),
+          );
+        } 
       ),
+      floatingActionButton:  FloatingActionButton(onPressed: _sendMessage),
+      // body: Column(
+      //   children: [
+      //     IconButton(
+      //         icon: Icon(Icons.send, color: Colors.blue),
+      //         onPressed: _sendMessage,
+      //     ),
+      //     ListView.builder(
+      //       itemCount: res.length,
+      //       itemBuilder: (context, index) {
+      //         final msg = res[index];
+      //         final response = msg['response'];
+      //         return ListTile( title: Text(response),);
+      //       }
+      //     ),
+      //     Expanded(
+      //       child: ListView.builder(
+      //         reverse: true,
+      //         itemCount: _messages.length + (_isSending ? 1 : 0),
+      //         itemBuilder: (context, index) => index == 0 && _isSending
+      //             ? Center(child: CircularProgressIndicator())
+      //             : _buildMessageBubble(
+      //                 _messages[index - (_isSending ? 1 : 0)]),
+      //       ),
+      //     ),
+      //     Padding(
+      //       padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      //       child: Row(
+      //         children: [
+      //           Expanded(
+      //             child: TextField(
+      //               controller: _controller,
+      //               decoration: InputDecoration(
+      //                 hintText: "메시지를 입력하세요...",
+      //                 border: OutlineInputBorder(),
+      //                 filled: true,
+      //                 fillColor: Colors.grey[200],
+      //               ),
+      //             ),
+      //           ),
+      //           IconButton(
+      //             icon: Icon(Icons.send, color: Colors.blue),
+      //             onPressed: _sendMessage,
+      //           ),
+      //         ],
+      //       ),
+      //     ),
+      //   ],
+      // ),
     );
   }
 }
