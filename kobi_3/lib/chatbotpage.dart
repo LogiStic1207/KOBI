@@ -3,6 +3,8 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -13,20 +15,41 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
   bool _isSending = false;
-
+  String res = 'hello world';
   // Define the size variables
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
         _messages.insert(0, {"text": text, "isBot": false});
         _isSending = true;
       });
+
+      // Send user message to the server and wait for the response
+      var url = 'http://172.19.99.105:5000/transform';
+      var response = await http.post(Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'text': text}));
       _controller.clear();
-      _simulateBotResponse(text);
+
+      if (response.statusCode == 200) {
+        var responseData = jsonDecode(response.body);
+        setState(() {
+          _messages
+              .insert(0, {"text": responseData['response'], "isBot": true});
+          _isSending = false;
+        });
+      } else {
+        print('Failed to send message');
+        setState(() {
+          _messages
+              .insert(0, {"text": "Failed to fetch response", "isBot": true});
+          _isSending = false;
+        });
+      }
     }
   }
 
@@ -173,6 +196,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                       filled: true,
                       fillColor: Colors.grey[200],
                     ),
+                    onSubmitted: (text) => _sendMessage(),
                   ),
                 ),
                 IconButton(
