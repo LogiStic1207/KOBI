@@ -158,10 +158,8 @@ class _LoginState extends State<Login> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -180,7 +178,10 @@ class _LoginState extends State<Login> {
                 builder: (_, isLoading, __) => isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: _loadLoginInfo,
+                        onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ChatBotPage())),
                         child: const Text('로그인',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
