@@ -36,20 +36,20 @@ class _ChatBotPageState extends State<ChatBotPage> {
         _messages.add({"text": text, "isBot": false});
         //_isSending = true;
       });
-
+      _controller.clear();
       // Send user message to the server and wait for the response
       var url = 'http://218.150.183.164:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'query': text}));
-      _controller.clear();
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         print(responseData);
 
         setState(() {
-          _answer = responseData['Query'];
+          _answer = responseData['Answer'];
+
           //_intent = responseData['Intent'];
           // _intent = responseData['Intent'];
           // _ner = responseData['Ner'][0];
