@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -12,65 +13,78 @@ class ChatBotPage extends StatefulWidget {
 }
 
 class _ChatBotPageState extends State<ChatBotPage> {
+  //String _intent = "위치";
+  //String _ner = "해울관";
+  String _answer = "초기 응답입니다.";
   final TextEditingController _controller = TextEditingController();
-  List<Map<String, dynamic>> _messages = [];
-  bool _isSending = false;
-  // String res = 'hello world';
-  // Define the size variables
+  final List<Map<String, dynamic>> _messages = [];
+
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
+
+  String query = r"""
+        query get($_intent: String!, $_ner: String!){
+          answer(intent:$_intent, ner:$_ner){
+            answer
+            image
+          }
+        }
+  """;
 
   void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        _messages.insert(0, {"text": text, "isBot": false});
-        _isSending = true;
+        _messages.add({"text": text, "isBot": false});
+        //_isSending = true;
       });
-
+      _controller.clear();
       // Send user message to the server and wait for the response
       var url = 'http://218.150.183.164:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'query': text}));
-      _controller.clear();
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         print(responseData);
+
         setState(() {
-          _messages
-              .insert(0, {"text": responseData['response'], "isBot": true});
-          _isSending = false;
+          _answer = responseData['Answer'];
+
+          //_intent = responseData['Intent'];
+          // _intent = responseData['Intent'];
+          // _ner = responseData['Ner'][0];
+          _messages.add({"text": _answer, "isBot": true});
+          //_isSending = false;
         });
+        print(_answer);
       } else {
         print('Failed to send message');
         setState(() {
-          _messages
-              .insert(0, {"text": "Failed to fetch response", "isBot": true});
-          _isSending = false;
+          _messages.add({"text": "Failed to fetch response", "isBot": true});
+          //_isSending = false;
         });
       }
     }
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message) {
-    bool isBot = message["isBot"];
+  Widget _buildMessageBubble(Map<String, dynamic> _message) {
+    bool isBot = _message["isBot"];
     return Align(
-      alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        margin: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: isBot ? Colors.grey[300] : Colors.blue[300],
-        ),
-        child: Text(
-          message["text"],
-          style: TextStyle(fontSize: 16),
-        ),
-      ),
-    );
+        alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: isBot ? Colors.grey[200] : Colors.blue[300],
+          ),
+          child: Text(
+            _message['text'],
+            style: TextStyle(fontSize: 16),
+          ),
+        ));
   }
 
   Widget _buildDrawer() {
@@ -142,39 +156,26 @@ class _ChatBotPageState extends State<ChatBotPage> {
       drawer: _buildDrawer(),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _messages.length + (_isSending ? 1 : 0),
-              itemBuilder: (context, index) => index == 0 && _isSending
-                  ? Center(child: CircularProgressIndicator())
-                  : _buildMessageBubble(
-                      _messages[index - (_isSending ? 1 : 0)]),
-            ),
-          ),
+          Container(
+              height: 500,
+              child: ListView.builder(
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    return _buildMessageBubble(_messages[index]);
+                  })),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "메시지를 입력하세요...",
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                    ),
-                    onSubmitted: (text) => _sendMessage(),
+                    decoration: InputDecoration(hintText: "메시지를 입력하세요..."),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
-          ),
+                    onPressed: _sendMessage,
+                    icon: Icon(Icons.send, color: Colors.blue))
+              ]))
         ],
       ),
     );

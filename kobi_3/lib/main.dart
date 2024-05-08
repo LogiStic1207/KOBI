@@ -3,56 +3,43 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import './login.dart';
 
 void main() async {
-  await initHiveForFlutter();
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure plugin is initialized
+  await initHiveForFlutter(); // Initialize Hive for GraphQL cache
 
-  runApp(MaterialApp(home: MyApp()));
-}
-
-class Config {
-  static final HttpLink httpLink = HttpLink(
-    'http://localhost:4000/graphql',
+  final HttpLink httpLink = HttpLink(
+    'http://218.150.183.164:4000/graphql', // Correct the endpoint if necessary
   );
-  static final AuthLink authLink = AuthLink(
-    getToken: () async => 'Bearer <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>',
+
+  final AuthLink authLink = AuthLink(
+    getToken: () async =>
+        'Bearer <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>', // Ensure your token is fetched correctly
   );
-  static final Link link = authLink.concat(httpLink);
 
-  static ValueNotifier<GraphQLClient> initClient() {
-    ValueNotifier<GraphQLClient> client = ValueNotifier(
-        GraphQLClient(cache: GraphQLCache(store: HiveStore()), link: link));
-    return client;
-  }
+  final Link link = authLink.concat(httpLink);
+
+  ValueNotifier<GraphQLClient> client = ValueNotifier(
+    GraphQLClient(
+      link: link,
+      cache: GraphQLCache(store: HiveStore()),
+    ),
+  );
+
+  runApp(GraphQLProvider(
+    client: client,
+    child: MaterialApp(home: MyApp()),
+  ));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  //late final ValueNotifier<GraphQLClient> client;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GraphQLProvider(
-      client: Config.initClient(),
-      child: MaterialApp(
-        title: 'KOBI: 코리아텍 비서',
-        home: Scaffold(
-          body: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              FocusScope.of(context).requestFocus(new FocusNode());
-            },
-            child: Login(),
-          ),
+    return MaterialApp(
+      title: 'KOBI: 코리아텍 비서',
+      home: Scaffold(
+        body: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Login(),
         ),
       ),
     );
