@@ -25,95 +25,16 @@ class _LoginState extends State<Login> {
     //_loadLoginInfo();
   }
 
-  Future<void> _loadLoginInfo() async {
+  Future<void> _sendInfotoServer() async {
     //final prefs = await SharedPreferences.getInstance();
     setState(() {
       userId = _idController.text;
       userPw = _pwController.text;
     });
-    //_idController.text = prefs.getString('userId') ?? '';
-    //_pwController.text = prefs.getString('userPw') ?? '';
-    if (_idController.text.isNotEmpty && _pwController.text.isNotEmpty) {
-      print(userId);
-      print(userPw);
-      login(userId, userPw);
-    }
-  }
+    Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatBotPage()));
 
-  Future<void> login(String? userId, String? userPwd) async {
-    var headers = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    };
-
-    var body =
-        'anchor=&id=EL2&RelayState=%2Flocal%2Fsso%2Findex.php&user_id=june573166&user_password=rlaalswns9%21';
-    var url = 'https://tsso.koreatech.ac.kr/svc/tk/Login.do';
-
-    var response = await http.post(
-      Uri.parse(url),
-      headers: headers,
-      body: body,
-    );
-    print('시도 1.');
-    print(response.statusCode);
-    url = response.headers['location'] ?? '';
-    if (url.isNotEmpty) {
-      response = await http.get(Uri.parse(url), headers: headers);
-    }
-    print('리디렉션 후 시도1');
-    print(response.statusCode);
-
-    url = response.headers['location'] ?? '';
-    if (url.isNotEmpty) {
-      response = await http.get(Uri.parse(url), headers: headers);
-    }
-    print('리디렉션 후 시도2');
-    print(response.statusCode);
-    url = response.headers['location'] ?? '';
-    if (url.isNotEmpty) {
-      response = await http.get(Uri.parse(url), headers: headers);
-    }
-    print('리디렉션 후 시도3');
-    if (response.statusCode == 200) {
-      print('로그인 성공!');
-    } else {
-      print('로그인 실패ㅠㅠ');
-    }
-
-    // 후속 요청...
-    // Dart에서는 `setCookieSync` 같은 직접적인 쿠키 관리 함수가 없습니다. 서버 응답에 따라 쿠키를 관리해야 합니다.
-  }
-
-  Future<void> _loginRequest() async {
-    _isLoading.value = true;
-    var url = "https://tsso.koreatech.ac.kr/svc/tk/Login.do";
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
-        'user_id': _idController.text,
-        'user_pwd': _pwController.text,
-        'RelayState': '/index.jsp',
-        'id': 'PORTAL',
-        'targetId': 'PORTAL',
-      },
-    ).timeout(const Duration(seconds: 5));
-
-    _isLoading.value = false;
-    if (response.statusCode == 200) {
-      final prefs = await SharedPreferences.getInstance();
-      if (response.body.contains('alert')) {
-        _showToast('로그인 실패. ID/PW를 확인해주세요');
-      } else {
-        _showToast('로그인 성공');
-        await prefs.setString('userId', _idController.text);
-        await prefs.setString('userPw', _pwController.text);
-        Navigator.of(context)
-            .pushReplacement(MaterialPageRoute(builder: (_) => ChatBotPage()));
-      }
-    } else {
-      _showToast('서버 오류로 로그인 실패');
-    }
   }
 
   void _showToast(String message) {
@@ -178,10 +99,7 @@ class _LoginState extends State<Login> {
                 builder: (_, isLoading, __) => isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ChatBotPage())),
+                        onPressed: _sendInfotoServer,
                         child: const Text('로그인',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
