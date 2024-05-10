@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import './login.dart';
+import 'package:kobi_3/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure plugin is initialized
   await initHiveForFlutter(); // Initialize Hive for GraphQL cache
 
   final HttpLink httpLink = HttpLink(
-    'http://218.150.183.164:4000/graphql', // Correct the endpoint if necessary
+    'http://192.168.0.13:4000/graphql', // Correct the endpoint if necessary
   );
 
   final AuthLink authLink = AuthLink(
