@@ -54,8 +54,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
     if( response.statusCode == 200) {
       var responseData = jsonDecode(response.body);
       setState(() {
-        _intent = responseData[0];
-        _ner = responseData[1];
+        _intent = responseData[0]["Intent"]; //{"위치", "청솔관"}
+        _ner = responseData[1]["Ner"];
       });
 
     } else {
