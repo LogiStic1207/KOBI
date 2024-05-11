@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
 import 'chatbotpage.dart';
 import 'dashboard.dart';
+import 'dart:convert';
+
 
 class Login extends StatefulWidget {
   final String? title;
@@ -31,15 +33,28 @@ class _LoginPageState extends State<Login> {
 
 
   Future<void> _sendInfotoServer() async {
+    print(_idController.text);
+    print(_pwController.text);
     //final prefs = await SharedPreferences.getInstance();
     setState(() {
       userId = _idController.text;
       userPw = _pwController.text;
     });
-    Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChatBotPage()));
-
+    var url = 'http://218.150.183.164:5000/login';
+    var response = await http.post(Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'id': userId, 'pw': userPw}));
+    var r = jsonDecode(response.body);
+    var loginState = r["LoginState"];
+    if (loginState) {
+      print('로그인 성공!');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage()),
+      );
+    } else{
+      print('로그인 실패'); //로그인 실패 UI 부탁드려요 준서님 ㅠㅠ
+    }
   }
 
   Widget _entryField(String title, {bool isPassword = false}) {
@@ -131,12 +146,7 @@ class _LoginPageState extends State<Login> {
 
   Widget _submitButton(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardPage()),
-        );
-      },
+      onTap: _sendInfotoServer,
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),
