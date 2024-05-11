@@ -4,8 +4,6 @@ import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -71,9 +69,16 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
   Widget _buildMessageBubble(Map<String, dynamic> _message) {
     bool isBot = _message["isBot"];
-    return Align(
-        alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
-        child: Container(
+    Widget avatar = isBot
+        ? Image.asset('assets/logo.png', width: 24, height: 24) // 챗봇 아이콘
+        : Icon(Icons.person, size: 24, color: Colors.blue); // 사용자 아이콘
+
+    return Row(
+      mainAxisAlignment:
+          isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
+      children: [
+        if (!isBot) avatar, // 사용자 메시지이면 아이콘을 텍스트 앞에 배치
+        Container(
           padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           margin: EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -82,9 +87,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
           ),
           child: Text(
             _message['text'],
-            style: TextStyle(fontSize: 16),
+            style: TextStyle(fontSize: 16, color: Colors.white),
           ),
-        ));
+        ),
+        if (isBot) avatar, // 챗봇 메시지이면 아이콘을 텍스트 뒤에 배치
+      ],
+    );
   }
 
   Widget _buildDrawer() {
@@ -148,35 +156,60 @@ class _ChatBotPageState extends State<ChatBotPage> {
         title: Text("KOBI"),
         actions: [
           IconButton(
-              icon: Icon(Icons.person),
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => MyPage()))),
+            icon: Icon(Icons.person),
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => MyPage())),
+          ),
         ],
       ),
       drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          Container(
-              height: 500,
-              child: ListView.builder(
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    return _buildMessageBubble(_messages[index]);
-                  })),
-          Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(hintText: "메시지를 입력하세요..."),
+      body: Container(
+        height: MediaQuery.of(context).size.height -
+            136, // AppBar와 bottomSheet의 높이를 고려한 값
+        child: ListView.builder(
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              return _buildMessageBubble(_messages[index]);
+            }),
+      ),
+      bottomSheet: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 3,
+              blurRadius: 5,
+              offset: Offset(0, -1), // changes position of shadow
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(25.0),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: "메시지를 입력하세요...",
+                    border: InputBorder.none,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   ),
                 ),
-                IconButton(
-                    onPressed: _sendMessage,
-                    icon: Icon(Icons.send, color: Colors.blue))
-              ]))
-        ],
+              ),
+            ),
+            IconButton(
+                onPressed: _sendMessage,
+                icon: Icon(Icons.send, color: Colors.blue)),
+          ],
+        ),
       ),
     );
   }

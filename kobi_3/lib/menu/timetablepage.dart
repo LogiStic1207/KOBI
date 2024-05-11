@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'options.dart';
-import 'mypage.dart';
 import 'package:kobi_3/chatbotpage.dart';
 
 class TimetablePage extends StatefulWidget {
@@ -11,6 +10,7 @@ class TimetablePage extends StatefulWidget {
 
 class _TimetablePageState extends State<TimetablePage> {
   final List<String> _departmentList = [
+    '학과 선택',
     '기계공학부',
     '메카트로닉스공학부',
     '전기ㆍ전자ㆍ통신공학부',
@@ -32,7 +32,7 @@ class _TimetablePageState extends State<TimetablePage> {
     }
   """;
 
-  String _selectedDepartment = 'HRD학과';
+  String _selectedDepartment = '학과 선택';
   List<Map<String, dynamic>> allCourses = [];
   List<Map<String, dynamic>> filteredCourses = [];
   List<Map<String, dynamic>> cartItems = [];
@@ -78,7 +78,7 @@ class _TimetablePageState extends State<TimetablePage> {
       drawer: _buildDrawer(),
       body: Column(
         children: [
-          _buildDepartmentDropdown(),
+          _buildDepartmentDropdownAndQueryButton(),
           _buildQueryResultContainer(),
         ],
       ),
@@ -112,6 +112,8 @@ class _TimetablePageState extends State<TimetablePage> {
                         MaterialPageRoute(
                             builder: (context) => OptionsPage()))),
                 Divider(),
+                _buildCartContainer(), // Call to build the cart container
+                Divider(),
               ],
             ),
           ),
@@ -138,55 +140,150 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
-  Widget _buildDepartmentDropdown() => DropdownButton(
-      value: _selectedDepartment,
-      items: _departmentList
-          .map((value) =>
-              DropdownMenuItem<String>(value: value, child: Text(value)))
-          .toList(),
-      onChanged: (String? newValue) {
-        if (newValue != null) {
-          setState(() => _selectedDepartment = newValue);
-        }
-      });
+  Widget _buildCartContainer() {
+    return Container(
+      padding: EdgeInsets.all(8),
+      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '장바구니',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Divider(),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: cartItems.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(cartItems[index]['name']),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      cartItems.removeAt(index);
+                    });
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildQueryResultContainer() => Expanded(
-          child: Query(
-        options: QueryOptions(
-          document: gql(query),
-          variables: {"_selectedDepartment": _selectedDepartment},
+  Widget _buildDepartmentDropdownAndQueryButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IntrinsicWidth(
+          // This widget forces its child to have a width that fits its content
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: false, // Set to false to fit content
+                value: _selectedDepartment,
+                icon: const Icon(Icons.arrow_drop_down),
+                iconSize: 24,
+                iconEnabledColor: Colors.black,
+                items: _departmentList.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() => _selectedDepartment = newValue);
+                  }
+                },
+                dropdownColor: Colors.white,
+              ),
+            ),
+          ),
         ),
-        builder: (result, {refetch, fetchMore}) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (result.isLoading && !_isLoading) {
-              _setLoading(true);
-            } else if (_isLoading) {
-              _setLoading(false);
+        ElevatedButton(
+          onPressed: () {
+            if (_selectedDepartment != '학과 선택') {
+              fetchCourses();
+            } else {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("경고"),
+                    content: Text("과목을 선택해주세요."),
+                    actions: [
+                      TextButton(
+                        child: Text("OK"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             }
-          });
+          },
+          child: Text('조회'),
+        ),
+      ],
+    );
+  }
 
-          if (result.isLoading) {
-            return Center(child: CircularProgressIndicator());
-          } else if (result.hasException) {
-            return Text('Error: ${result.exception.toString()}');
-          } else if (result.data == null || result.data!["courses"] == null) {
-            return Text('No courses available');
-          }
-          allCourses = List<Map<String, dynamic>>.from(result.data!["courses"]);
-          return _buildCourseTable(allCourses);
-        },
-      ));
+  void fetchCourses() {
+    setState(() {
+      _isLoading = true;
+    });
+  }
 
-  void _setLoading(bool isLoading) {
-    if (_isLoading != isLoading) {
-      setState(() {
-        _isLoading = isLoading;
-      });
-    }
+  Widget _buildQueryResultContainer() {
+    return Expanded(
+      child: _isLoading
+          ? Query(
+              options: QueryOptions(
+                document: gql(query),
+                variables: {"_selectedDepartment": _selectedDepartment},
+                fetchPolicy: FetchPolicy.noCache,
+              ),
+              builder: (result, {refetch, fetchMore}) {
+                if (result.isLoading) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (result.hasException) {
+                  return Text('Error: ${result.exception.toString()}');
+                } else if (result.data == null ||
+                    result.data!["courses"] == null) {
+                  return Text('No courses available');
+                }
+                allCourses =
+                    List<Map<String, dynamic>>.from(result.data!["courses"]);
+                return _buildCourseTable(allCourses);
+              },
+            )
+          : Center(
+              child:
+                  Text("Select a department and click '조회' to fetch courses.")),
+    );
   }
 
   Widget _buildCourseTable(List courses) {
     double screenHeight = MediaQuery.of(context).size.height;
+    UniqueKey tableKey = UniqueKey();
 
     return Column(
       children: [
@@ -198,13 +295,15 @@ class _TimetablePageState extends State<TimetablePage> {
               labelText: 'Search Courses',
               suffixIcon: IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () => setState(() {
-                  filteredCourses = allCourses
-                      .where((course) => course['name']
-                          .toLowerCase()
-                          .contains(_searchController.text.toLowerCase()))
-                      .toList();
-                }),
+                onPressed: () {
+                  setState(() {
+                    filteredCourses = allCourses
+                        .where((course) => course['name']
+                            .toLowerCase()
+                            .contains(_searchController.text.toLowerCase()))
+                        .toList();
+                  });
+                },
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -213,8 +312,9 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
         ),
         Expanded(
-          flex: 2, // Takes 2/3 of the available space
+          flex: 2,
           child: Container(
+            key: tableKey, // 위젯에 새로운 키 할당
             height: screenHeight / 3,
             padding: EdgeInsets.all(8),
             margin: EdgeInsets.all(8),
@@ -230,17 +330,24 @@ class _TimetablePageState extends State<TimetablePage> {
               ],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width,
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: DataTable(
-                    columns: _buildColumns(),
-                    rows: courses.map((course) => _buildRow(course)).toList(),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: MediaQuery.of(context).size.width,
+                  ),
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columns: _buildColumns(),
+                        rows:
+                            courses.map((course) => _buildRow(course)).toList(),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -266,7 +373,7 @@ class _TimetablePageState extends State<TimetablePage> {
             ),
             child: Column(
               children: [
-                Text('Shopping Cart',
+                Text('과목 장바구니',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Expanded(
@@ -304,12 +411,8 @@ class _TimetablePageState extends State<TimetablePage> {
       '담당교수',
       '학년',
       '학점',
-      '이수구분',
       '강의구분',
-      '대상학부',
-      '대상',
       '시간',
-      '장소',
       '학강실설',
       '정원'
     ].map((header) => DataColumn(label: Text(header))).toList();
@@ -350,53 +453,8 @@ class _TimetablePageState extends State<TimetablePage> {
         DataCell(Text(course['grade'].toString())),
         DataCell(Text(course['credit'].toString())),
         DataCell(Text(course['type1'])),
-        DataCell(Text(course['type2'])),
-        DataCell(Text(course['targetDepartment'])),
-        DataCell(Text(course['target'])),
         DataCell(Text(course['time'])),
-        DataCell(Text(course['place'])),
         DataCell(Text(course['creditDetail'])),
         DataCell(Text(course['limit'].toString())),
       ]);
-
-  void _showCartDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('장바구니'),
-          content: Container(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                      '${cartItems[index]['name']} ${cartItems[index]['id']}'),
-                  trailing: IconButton(
-                    icon:
-                        Icon(Icons.indeterminate_check_box, color: Colors.red),
-                    onPressed: () {
-                      removeFromCart(cartItems[index]);
-                      Navigator.of(context)
-                          .pop(); // 장바구니에서 항목을 제거하고 다이얼로그를 닫습니다.
-                      _showCartDialog(); // 변경된 장바구니를 다시 보여주기 위해 다이얼로그를 다시 호출합니다.
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
