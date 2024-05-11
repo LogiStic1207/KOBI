@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
+import 'chatbotpage.dart';
 import 'dashboard.dart';
 
 class Login extends StatefulWidget {
@@ -19,14 +20,16 @@ class _LoginPageState extends State<Login> {
   final ValueNotifier<bool> _isObscure = ValueNotifier<bool>(true);
   final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
   bool _isPasswordVisible = false;
+  String userId = "";
+  String userPw = "";
 
   @override
   void initState() {
     super.initState();
-    _loadLoginInfo();
+    //_loadLoginInfo();
   }
 
-<<<<<<< HEAD
+
   Future<void> _sendInfotoServer() async {
     //final prefs = await SharedPreferences.getInstance();
     setState(() {
