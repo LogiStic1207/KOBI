@@ -37,39 +37,6 @@ class _LoginPageState extends State<Login> {
                   context,
                   MaterialPageRoute(builder: (context) => ChatBotPage()));
 
-=======
-  Future<void> _loadLoginInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    _idController.text = prefs.getString('userId') ?? '';
-    _pwController.text = prefs.getString('userPw') ?? '';
-  }
-
-  Future<void> login() async {
-    _isLoading.value = true;
-    final response = await http.post(
-      Uri.parse("https://tsso.koreatech.ac.kr/svc/tk/Login.do"),
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
-        'user_id': _idController.text,
-        'user_pwd': _pwController.text,
-        'RelayState': '/index.jsp',
-        'id': 'PORTAL',
-        'targetId': 'PORTAL',
-      },
-    ).timeout(const Duration(seconds: 5));
-
-    _isLoading.value = false;
-    if (response.statusCode == 200 && !response.body.contains('alert')) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', _idController.text);
-      await prefs.setString('userPw', _pwController.text);
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => DashboardPage()));
-      _showToast('로그인 성공');
-    } else {
-      _showToast('로그인 실패. ID/PW를 확인해주세요');
-    }
->>>>>>> acb571702b62017b8049d35bad2ee812ef7dc3b9
   }
 
   Widget _entryField(String title, {bool isPassword = false}) {
@@ -138,34 +105,7 @@ class _LoginPageState extends State<Login> {
     );
   }
 
-<<<<<<< HEAD
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/logo.png', width: 250, height: 200),
-              const SizedBox(height: 20),
-              const Text('KOBI: 코리아텍 비서',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              _buildTextField('ID', _idController),
-              _buildTextField('Password', _pwController, isPassword: true),
-              const SizedBox(height: 20),
-              ValueListenableBuilder<bool>(
-                valueListenable: _isLoading,
-                builder: (_, isLoading, __) => isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _sendInfotoServer,
-                        child: const Text('로그인',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-              ),
-            ],
-=======
+
   Widget _title() {
     return RichText(
       textAlign: TextAlign.center,
@@ -212,7 +152,6 @@ class _LoginPageState extends State<Login> {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [Color(0xfff7892b), Color(0xff0e5289)],
->>>>>>> acb571702b62017b8049d35bad2ee812ef7dc3b9
           ),
         ),
         child: const Text(
