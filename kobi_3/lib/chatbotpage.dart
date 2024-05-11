@@ -83,7 +83,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           margin: EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: isBot ? Colors.grey[200] : Colors.blue[300],
+            color: isBot ? Colors.orange : Colors.blue[300],
           ),
           child: Text(
             _message['text'],
