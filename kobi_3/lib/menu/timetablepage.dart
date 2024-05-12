@@ -43,7 +43,7 @@ class _TimetablePageState extends State<TimetablePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('강의 조회 및 시간표 제작'),
+        title: Text('KOBI : 시간표 제작'),
         actions: [
           Stack(
             children: <Widget>[

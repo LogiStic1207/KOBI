@@ -4,6 +4,7 @@ import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/options.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dashboard.dart';
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -16,6 +17,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
   String _answer = "초기 응답입니다.";
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // 기본 챗봇 메시지 추가
+    _messages.add(
+        {"text": "안녕하세요. 여러분만의 코리아텍 비서, 코비입니다.\n무엇을 도와드릴까요?", "isBot": true});
+  }
 
   double buttonWidth = 250.0;
   double buttonHeight = 50.0;
@@ -70,38 +79,53 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Widget _buildMessageBubble(Map<String, dynamic> _message) {
     bool isBot = _message["isBot"];
 
-    // 챗봇 메시지일 경우 프로필 아이콘과 이름을 포함하는 위젯
-    Widget botProfile = Column(
+    // 챗봇 프로필과 이름을 가로로 나열하는 위젯
+    Widget botHeader = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset('assets/logo.png', width: 24, height: 24), // 챗봇 아이콘
-        Text("코봇", style: TextStyle(fontSize: 12, color: Colors.black)) // 챗봇 이름
+        Image.asset('assets/logo.png', width: 40, height: 40), // 챗봇 프로필 사진
+        SizedBox(width: 7), // 프로필 사진과 이름 사이의 간격
+        Text("코비",
+            style: TextStyle(fontSize: 14, color: Colors.grey[600])), // 챗봇 이름
       ],
     );
 
-    return Row(
-      mainAxisAlignment:
-          isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.start, // 챗봇 아이콘과 텍스트를 위쪽에 맞추기
-      children: [
-        if (isBot) botProfile, // 챗봇 메시지이면 프로필을 표시
-        Flexible(
-          // 텍스트의 유연한 레이아웃 적용
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: isBot ? Colors.orange : Colors.blue[300],
-            ),
-            child: Text(
-              _message['text'],
-              style: TextStyle(fontSize: 16, color: Colors.white),
-              softWrap: true,
-            ),
-          ),
+    // 메시지 텍스트
+    Widget messageText = Container(
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: EdgeInsets.symmetric(
+          vertical: 4, horizontal: 16), // 여백을 추가하여 화면 가장자리와 거리를 두도록 함
+      decoration: BoxDecoration(
+        color:
+            isBot ? Colors.lightBlue[100] : Colors.grey[300], // 챗봇과 사용자 메시지 색상
+        borderRadius: BorderRadius.circular(18), // 모서리를 둥글게 처리하여 말풍선 효과 적용
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 2), // 그림자 효과
+          )
+        ],
+      ),
+      child: Text(
+        _message['text'],
+        style: TextStyle(fontSize: 16, color: Colors.black),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Align(
+        alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
+        child: Column(
+          crossAxisAlignment:
+              isBot ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+          children: isBot
+              ? [botHeader, messageText]
+              : [messageText], // 사용자 메시지에는 프로필과 이름이 포함되지 않음
         ),
-      ],
+      ),
     );
   }
 
@@ -127,7 +151,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                       // 시간표 제작 버튼
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xffe46b10),
+                          backgroundColor: Colors.orange,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -152,7 +176,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                       // 설정 버튼
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xffe46b10),
+                          backgroundColor: Colors.orange,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -181,24 +205,33 @@ class _ChatBotPageState extends State<ChatBotPage> {
               ],
             ),
           ),
-          Container(
-            width: buttonWidth,
-            height: buttonHeight,
-            margin: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: ListTile(
-                title: Text(
-                  '로그아웃',
-                  style: TextStyle(color: Colors.white),
-                  textAlign: TextAlign.center,
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  width: buttonWidth,
+                  height: buttonHeight,
+                  margin: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    title: Text(
+                      '로그아웃',
+                      style: TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                    onTap: () {/* Logout logic */},
+                  ),
                 ),
-                onTap: () {/* Logout logic */},
               ),
-            ),
+              IconButton(
+                icon: Icon(Icons.exit_to_app, color: Colors.blue),
+                onPressed: () => _confirmExit(context),
+                tooltip: '채팅창 나가기',
+              ),
+            ],
           ),
         ],
       ),
@@ -315,5 +348,37 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ],
       ),
     );
+  }
+
+  void _confirmExit(BuildContext context) async {
+    final bool confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('채팅창 나가기'),
+          content: Text('채팅창을 나가시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(true), // 대화 상자를 닫고 true를 반환
+              child: Text('예'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(false), // 대화 상자를 닫고 false를 반환
+              child: Text('아니오'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm) {
+      Navigator.pushReplacement(
+        // 사용자가 '예'를 선택했을 때 DashboardPage로 이동
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage()),
+      );
+    }
   }
 }

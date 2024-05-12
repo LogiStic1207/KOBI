@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
+import 'chatbotpage.dart';
 import 'dashboard.dart';
 import 'dart:convert';
 
@@ -29,27 +30,35 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<void> _sendInfotoServer() async {
-    //final prefs = await SharedPreferences.getInstance();
     setState(() {
-      userId = _idController.text;
-      userPw = _pwController.text;
+      _isLoading.value = true; // 로딩 상태 표시
     });
-    print(_idController);
-    print(_pwController);
-    var url = 'http://192.168.0.13:5000/login';
-    var response = await http.post(Uri.parse(url),
+
+    try {
+      var url = 'http://192.168.0.13:5000/login';
+      var response = await http.post(
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'id': userId, 'pw': userPw}));
-    var r = jsonDecode(response.body);
-    var loginState = r["LoginState"];
-    if (loginState) {
-      print('로그인 성공!');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardPage()),
+        body: jsonEncode({'id': _idController.text, 'pw': _pwController.text}),
       );
-    } else {
-      print('로그인 실패'); //로그인 실패 UI 부탁드려요 준서님 ㅠㅠ
+
+      var r = jsonDecode(response.body);
+      var loginState = r["LoginState"];
+
+      if (loginState) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => DashboardPage()));
+      } else {
+        // 로그인 실패 UI 처리
+        print('로그인 실패');
+      }
+    } catch (e) {
+      print('오류: $e');
+      // 사용자 친화적인 오류 메시지를 표시하여 예외 처리
+    } finally {
+      setState(() {
+        _isLoading.value = false; // 로딩 상태 초기화
+      });
     }
   }
 
@@ -72,6 +81,12 @@ class _LoginPageState extends State<Login> {
                   filled: true))
         ],
       ),
+    );
+  }
+
+  void _showToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 
