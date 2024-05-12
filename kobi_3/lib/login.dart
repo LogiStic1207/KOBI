@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
 import 'dashboard.dart';
+import 'dart:convert';
 
 class Login extends StatefulWidget {
   final String? title;
@@ -18,44 +19,37 @@ class _LoginPageState extends State<Login> {
   final TextEditingController _pwController = TextEditingController();
   final ValueNotifier<bool> _isObscure = ValueNotifier<bool>(true);
   final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
-  bool _isPasswordVisible = false;
+  String userId = "";
+  String userPw = "";
 
   @override
   void initState() {
     super.initState();
-    _loadLoginInfo();
+    //_loadLoginInfo();
   }
 
-  Future<void> _loadLoginInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    _idController.text = prefs.getString('userId') ?? '';
-    _pwController.text = prefs.getString('userPw') ?? '';
-  }
-
-  Future<void> login() async {
-    _isLoading.value = true;
-    final response = await http.post(
-      Uri.parse("https://tsso.koreatech.ac.kr/svc/tk/Login.do"),
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
-        'user_id': _idController.text,
-        'user_pwd': _pwController.text,
-        'RelayState': '/index.jsp',
-        'id': 'PORTAL',
-        'targetId': 'PORTAL',
-      },
-    ).timeout(const Duration(seconds: 5));
-
-    _isLoading.value = false;
-    if (response.statusCode == 200 && !response.body.contains('alert')) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', _idController.text);
-      await prefs.setString('userPw', _pwController.text);
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => DashboardPage()));
-      _showToast('로그인 성공');
+  Future<void> _sendInfotoServer() async {
+    //final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = _idController.text;
+      userPw = _pwController.text;
+    });
+    print(_idController);
+    print(_pwController);
+    var url = 'http://192.168.0.13:5000/login';
+    var response = await http.post(Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': userId, 'pw': userPw}));
+    var r = jsonDecode(response.body);
+    var loginState = r["LoginState"];
+    if (loginState) {
+      print('로그인 성공!');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage()),
+      );
     } else {
-      _showToast('로그인 실패. ID/PW를 확인해주세요');
+      print('로그인 실패'); //로그인 실패 UI 부탁드려요 준서님 ㅠㅠ
     }
   }
 
@@ -78,12 +72,6 @@ class _LoginPageState extends State<Login> {
                   filled: true))
         ],
       ),
-    );
-  }
-
-  void _showToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 
@@ -147,12 +135,10 @@ class _LoginPageState extends State<Login> {
 
   Widget _submitButton(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardPage()),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage()),
+      ),
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),
