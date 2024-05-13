@@ -17,10 +17,12 @@ class Login extends StatefulWidget {
 class _LoginPageState extends State<Login> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
-  final ValueNotifier<bool> _isObscure = ValueNotifier<bool>(true);
+  bool _isObscure = true;
   BuildContext? _dialogContext;
   bool _isIdSaved = false;
   bool _keepLoggedIn = false;
+  int _loginCount = 0;
+  String _lastLoggedInId = ""; // 마지막 로그인 시도한 ID 저장
 
   @override
   void initState() {
@@ -33,19 +35,27 @@ class _LoginPageState extends State<Login> {
     setState(() {
       _isIdSaved = prefs.getBool('isIdSaved') ?? false;
       _keepLoggedIn = prefs.getBool('keepLoggedIn') ?? false;
+      _loginCount = prefs.getInt('loginCount') ?? 0;
+      _lastLoggedInId = prefs.getString('lastLoggedInId') ?? '';
+
       if (_isIdSaved) {
         _idController.text = prefs.getString('savedId') ?? '';
       }
-      if (_keepLoggedIn) {
+      if (_keepLoggedIn && _loginCount > 0) {
         _pwController.text = prefs.getString('savedPassword') ?? '';
+        if (_idController.text == _lastLoggedInId) {
+          _sendInfotoServer(); // 자동 로그인 시도
+        }
       }
     });
   }
 
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('loginCount', _loginCount);
     prefs.setBool('isIdSaved', _isIdSaved);
     prefs.setBool('keepLoggedIn', _keepLoggedIn);
+    prefs.setString('lastLoggedInId', _idController.text); // 현재 ID 저장
     if (_isIdSaved) {
       prefs.setString('savedId', _idController.text);
     }
@@ -55,48 +65,55 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<void> _sendInfotoServer() async {
-    _showLoadingDialog();
+    // 새 ID 로그인 시 로그인 카운트 재설정
+    if (_lastLoggedInId != _idController.text) {
+      _loginCount = 0; // 새로운 ID의 첫 로그인
+    }
+    _showLoadingDialog(_loginCount == 0);
     try {
-      var url = 'http://172.29.64.228:5000/login';
-      var response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'id': _idController.text, 'pw': _pwController.text}),
-      );
-
-      var r = jsonDecode(response.body);
-      var loginState = r["LoginState"];
-
+      var response = await _makeLoginRequest();
+      var loginState = jsonDecode(response.body)["LoginState"];
       if (loginState) {
-        Navigator.of(_dialogContext!)
-            .pop(); // Use the captured context to close the dialog
+        _loginCount++; // 성공적인 로그인 횟수 증가
+        await _savePreferences();
+        Navigator.of(_dialogContext!).pop();
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => DashboardPage()));
       } else {
-        Navigator.of(_dialogContext!)
-            .pop(); // Use the captured context to close the dialog
+        Navigator.of(_dialogContext!).pop();
         _showToast('로그인 실패');
       }
     } catch (e) {
-      Navigator.of(_dialogContext!)
-          .pop(); // Use the captured context to close the dialog
+      Navigator.of(_dialogContext!).pop();
+      _showToast('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
       print('오류: $e');
     }
   }
 
-  void _showLoadingDialog() {
+  Future<http.Response> _makeLoginRequest() {
+    var url = 'http://172.29.64.228:5000/login';
+    return http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': _idController.text, 'pw': _pwController.text}),
+    );
+  }
+
+  void _showLoadingDialog(bool isFirstLogin) {
     showDialog(
       context: context,
-      barrierDismissible: false, // 사용자가 대화상자 바깥을 탭하여 닫을 수 없도록 설정
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        _dialogContext = context; // 대화상자가 표시되는 컨텍스트를 캡처
+        _dialogContext = context;
+        String message =
+            isFirstLogin ? "로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다." : "로그인중입니다.";
         return AlertDialog(
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const CircularProgressIndicator(),
               const SizedBox(width: 24),
-              Expanded(child: Text("로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다."))
+              Expanded(child: Text(message))
             ],
           ),
         );
@@ -116,7 +133,7 @@ class _LoginPageState extends State<Login> {
           const SizedBox(height: 10),
           TextField(
               controller: isPassword ? _pwController : _idController,
-              obscureText: isPassword ? _isObscure.value : false,
+              obscureText: isPassword ? _isObscure : false,
               decoration: const InputDecoration(
                   border: InputBorder.none,
                   fillColor: Color(0xfff3f3f4),
