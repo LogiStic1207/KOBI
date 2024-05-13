@@ -37,6 +37,8 @@ class _LoginPageState extends State<Login> {
 
 /*
   Future<void> _sendInfotoServer() async {
+    print(_idController.text);
+    print(_pwController.text);
     //final prefs = await SharedPreferences.getInstance();
     setState(() {
       userId = _idController.text;
@@ -206,6 +208,7 @@ class _LoginPageState extends State<Login> {
 
   Widget _submitButton(BuildContext context) {
     return InkWell(
+      onTap: _sendInfotoServer,
       onTap: _sendInfotoServer,
       child: Container(
         width: MediaQuery.of(context).size.width,
