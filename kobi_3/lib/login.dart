@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
-import 'chatbotpage.dart';
 import 'dashboard.dart';
 import 'dart:convert';
 
@@ -19,23 +18,46 @@ class _LoginPageState extends State<Login> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
   final ValueNotifier<bool> _isObscure = ValueNotifier<bool>(true);
-  final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
-  String userId = "";
-  String userPw = "";
+  BuildContext? _dialogContext;
+  bool _isIdSaved = false;
+  bool _keepLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    //_loadLoginInfo();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isIdSaved = prefs.getBool('isIdSaved') ?? false;
+      _keepLoggedIn = prefs.getBool('keepLoggedIn') ?? false;
+      if (_isIdSaved) {
+        _idController.text = prefs.getString('savedId') ?? '';
+      }
+      if (_keepLoggedIn) {
+        _pwController.text = prefs.getString('savedPassword') ?? '';
+      }
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isIdSaved', _isIdSaved);
+    prefs.setBool('keepLoggedIn', _keepLoggedIn);
+    if (_isIdSaved) {
+      prefs.setString('savedId', _idController.text);
+    }
+    if (_keepLoggedIn) {
+      prefs.setString('savedPassword', _pwController.text);
+    }
   }
 
   Future<void> _sendInfotoServer() async {
-    setState(() {
-      _isLoading.value = true; // 로딩 상태 표시
-    });
-
+    _showLoadingDialog();
     try {
-      var url = 'http://192.168.0.13:5000/login';
+      var url = 'http://172.29.64.228:5000/login';
       var response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
@@ -46,20 +68,40 @@ class _LoginPageState extends State<Login> {
       var loginState = r["LoginState"];
 
       if (loginState) {
+        Navigator.of(_dialogContext!)
+            .pop(); // Use the captured context to close the dialog
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => DashboardPage()));
       } else {
-        // 로그인 실패 UI 처리
-        print('로그인 실패');
+        Navigator.of(_dialogContext!)
+            .pop(); // Use the captured context to close the dialog
+        _showToast('로그인 실패');
       }
     } catch (e) {
+      Navigator.of(_dialogContext!)
+          .pop(); // Use the captured context to close the dialog
       print('오류: $e');
-      // 사용자 친화적인 오류 메시지를 표시하여 예외 처리
-    } finally {
-      setState(() {
-        _isLoading.value = false; // 로딩 상태 초기화
-      });
     }
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 사용자가 대화상자 바깥을 탭하여 닫을 수 없도록 설정
+      builder: (BuildContext context) {
+        _dialogContext = context; // 대화상자가 표시되는 컨텍스트를 캡처
+        return AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 24),
+              Expanded(child: Text("로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다."))
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _entryField(String title, {bool isPassword = false}) {
@@ -101,8 +143,7 @@ class _LoginPageState extends State<Login> {
             Positioned(
               top: -height * .15,
               right: -MediaQuery.of(context).size.width * .4,
-              child:
-                  const BezierContainer(), // Make sure this widget is properly defined elsewhere
+              child: const BezierContainer(),
             ),
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -111,13 +152,36 @@ class _LoginPageState extends State<Login> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(height: height * .2),
-                  _title(), // Ensure this is defined elsewhere in your class
+                  _title(),
                   const SizedBox(height: 50),
                   _entryField("ID"),
                   _entryField("Password", isPassword: true),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _isIdSaved,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _isIdSaved = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('아이디 저장'),
+                      Checkbox(
+                        value: _keepLoggedIn,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _keepLoggedIn = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('로그인 유지'),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   _submitButton(context),
-                  _divider(), // Ensure this is defined elsewhere in your class
+                  _divider(),
                   SizedBox(height: height * .055),
                 ],
               ),
@@ -128,32 +192,9 @@ class _LoginPageState extends State<Login> {
     );
   }
 
-  Widget _title() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-          text: 'KO',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: Color(0xffe46b10)),
-          children: [
-            TextSpan(
-                text: ' : ',
-                style: TextStyle(color: Colors.black, fontSize: 30)),
-            TextSpan(
-                text: 'BI',
-                style: TextStyle(color: Color(0xff0e5289), fontSize: 30)),
-          ]),
-    );
-  }
-
   Widget _submitButton(BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardPage()),
-      ),
+      onTap: _sendInfotoServer,
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -175,7 +216,7 @@ class _LoginPageState extends State<Login> {
           ),
         ),
         child: const Text(
-          'Login',
+          '로그인',
           style: TextStyle(fontSize: 20, color: Colors.white),
         ),
       ),
@@ -199,6 +240,26 @@ class _LoginPageState extends State<Login> {
           SizedBox(width: 20),
         ],
       ),
+    );
+  }
+
+  Widget _title() {
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+          text: 'KO',
+          style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              color: Color(0xffe46b10)),
+          children: [
+            TextSpan(
+                text: ' : ',
+                style: TextStyle(color: Colors.black, fontSize: 30)),
+            TextSpan(
+                text: 'BI',
+                style: TextStyle(color: Color(0xff0e5289), fontSize: 30)),
+          ]),
     );
   }
 }
