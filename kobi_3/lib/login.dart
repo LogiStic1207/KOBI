@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
 import 'chatbotpage.dart';
 import 'dashboard.dart';
+import 'dart:convert';
 
 class Login extends StatefulWidget {
   final String? title;
@@ -22,6 +23,11 @@ class _LoginPageState extends State<Login> {
   bool _isPasswordVisible = false;
   String userId = "";
   String userPw = "";
+  BuildContext? _dialogContext;
+  bool _isIdSaved = false;
+  bool _keepLoggedIn = false;
+  int _loginCount = 0;
+  String _lastLoggedInId = "";
 
   @override
   void initState() {
@@ -29,7 +35,7 @@ class _LoginPageState extends State<Login> {
     //_loadLoginInfo();
   }
 
-
+/*
   Future<void> _sendInfotoServer() async {
     //final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -40,6 +46,41 @@ class _LoginPageState extends State<Login> {
                   context,
                   MaterialPageRoute(builder: (context) => ChatBotPage()));
 
+  }
+*/
+  Future<void> _sendInfotoServer() async {
+    // 새 ID 로그인 시 로그인 카운트 재설정
+    if (_lastLoggedInId != _idController.text) {
+      _loginCount = 0; // 새로운 ID의 첫 로그인
+    }
+    _showLoadingDialog(_loginCount == 0);
+    try {
+      var response = await _makeLoginRequest();
+      var loginState = jsonDecode(response.body)["LoginState"];
+      if (loginState) {
+        _loginCount++; // 성공적인 로그인 횟수 증가
+        await _savePreferences();
+        Navigator.of(_dialogContext!).pop();
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => DashboardPage()));
+      } else {
+        Navigator.of(_dialogContext!).pop();
+        _showToast('로그인 실패');
+      }
+    } catch (e) {
+      Navigator.of(_dialogContext!).pop();
+      _showToast('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
+      print('오류: $e');
+    }
+  }
+
+  Future<http.Response> _makeLoginRequest() {
+    var url = 'http://192.168.219.101:5000/login';
+    return http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': _idController.text, 'pw': _pwController.text}),
+    );
   }
 
   Widget _entryField(String title, {bool isPassword = false}) {
@@ -61,6 +102,41 @@ class _LoginPageState extends State<Login> {
                   filled: true))
         ],
       ),
+    );
+  }
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('loginCount', _loginCount);
+    prefs.setBool('isIdSaved', _isIdSaved);
+    prefs.setBool('keepLoggedIn', _keepLoggedIn);
+    prefs.setString('lastLoggedInId', _idController.text); // 현재 ID 저장
+    if (_isIdSaved) {
+      prefs.setString('savedId', _idController.text);
+    }
+    if (_keepLoggedIn) {
+      prefs.setString('savedPassword', _pwController.text);
+    }
+  }
+
+  void _showLoadingDialog(bool isFirstLogin) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        _dialogContext = context;
+        String message =
+            isFirstLogin ? "로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다." : "로그인중입니다.";
+        return AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 24),
+              Expanded(child: Text(message))
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -108,7 +184,6 @@ class _LoginPageState extends State<Login> {
     );
   }
 
-
   Widget _title() {
     return RichText(
       textAlign: TextAlign.center,
@@ -131,12 +206,7 @@ class _LoginPageState extends State<Login> {
 
   Widget _submitButton(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardPage()),
-        );
-      },
+      onTap: _sendInfotoServer,
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),

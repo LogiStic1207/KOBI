@@ -38,7 +38,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       });
       _controller.clear();
       // Send user message to the server and wait for the response
-      var url = 'http://218.150.183.164:5000/query';
+      var url = 'http://192.168.219.101:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'query': text}));
