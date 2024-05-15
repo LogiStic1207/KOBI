@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
@@ -64,27 +65,46 @@ class _TimetablePageState extends State<TimetablePage> {
       appBar: AppBar(title: Text('주간 시간표')),
       body: Stack(
         children: [
-          Column(
-            children: [
-              Expanded(child: buildTimeTable()),
-              buildCart(),
-            ],
+          SingleChildScrollView(
+            // This makes the column scrollable
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Important for a scrollable view
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height *
+                      0.8, // Adjust height as necessary
+                  child: buildTimeTable(),
+                ),
+                SizedBox(height: 120), // Space for the cart
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: MediaQuery.of(context)
+                .padding
+                .bottom, // Position your cart at the bottom
+            left: 0,
+            right: 0,
+            child: buildCart(),
           ),
           SlidingUpPanel(
             controller: _panelController,
             panel: buildSlidingPanel(),
             minHeight: 60,
-            maxHeight: MediaQuery.of(context).size.height * 0.5,
+            maxHeight: MediaQuery.of(context).size.height *
+                0.5, // Half the screen height
             collapsed: Container(
               decoration: BoxDecoration(
                 color: Colors.blueGrey,
                 borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24.0),
-                    topRight: Radius.circular(24.0)),
+                  topLeft: Radius.circular(24.0),
+                  topRight: Radius.circular(24.0),
+                ),
               ),
               child: Center(
-                  child: Text('과목 검색 및 추가',
-                      style: TextStyle(color: Colors.white))),
+                child:
+                    Text('과목 검색 및 추가', style: TextStyle(color: Colors.white)),
+              ),
             ),
           ),
         ],
@@ -96,18 +116,16 @@ class _TimetablePageState extends State<TimetablePage> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 1),
           color: Colors.grey[200],
           child: Row(
             children: <Widget>[
               SizedBox(width: 64),
-              ...days
-                  .map((day) => Expanded(
-                        child: Center(
-                            child: Text(day,
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                      ))
-                  .toList(),
+              ...days.map((day) => Expanded(
+                    child: Center(
+                        child: Text(day,
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ))
             ],
           ),
         ),
@@ -125,18 +143,16 @@ class _TimetablePageState extends State<TimetablePage> {
                             child: Text('${hour}시',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                          ...days
-                              .map((_) => TableCell(
-                                    child: Container(
-                                      padding: EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        color: Colors.white,
-                                      ),
-                                      child: Text(''),
-                                    ),
-                                  ))
-                              .toList(),
+                          ...days.map((_) => TableCell(
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    color: Colors.white,
+                                  ),
+                                  child: Text(''),
+                                ),
+                              ))
                         ],
                       ))
                   .toList(),
@@ -149,7 +165,7 @@ class _TimetablePageState extends State<TimetablePage> {
 
   Widget buildCart() {
     return Container(
-      margin: EdgeInsets.fromLTRB(16, 8, 16, 16), // Reduced top margin
+      margin: EdgeInsets.fromLTRB(8, 0, 8, 8), // Reduced top margin
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -215,7 +231,6 @@ class _TimetablePageState extends State<TimetablePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            // This row contains the dropdown and search box and will not scroll.
             children: [
               Expanded(
                 flex: 2,
@@ -269,7 +284,6 @@ class _TimetablePageState extends State<TimetablePage> {
             ],
           ),
           Expanded(
-            // Only this part will scroll.
             child: !_isLoading
                 ? ListView.builder(
                     itemCount: filteredCourses.isNotEmpty
@@ -280,49 +294,30 @@ class _TimetablePageState extends State<TimetablePage> {
                           ? filteredCourses[index]
                           : allCourses[index];
                       return ListTile(
-                        title: Row(
+                        title: Text('${course['name']} (${course['id']})'),
+                        subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(course['name'],
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            SizedBox(width: 0.5), // Text 간의 공간
-                            Expanded(
-                              child: Text(course['id'],
-                                  style: TextStyle(fontSize: 12)),
-                            ),
-                            SizedBox(width: 0.5), // Text 간의 공간
-                            Expanded(
-                              child: Text(course['professor'],
-                                  style: TextStyle(fontSize: 12)),
-                            ),
-                          ],
-                        ),
-                        subtitle: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(course['time'],
-                                  style: TextStyle(fontSize: 10)),
-                            ),
-                            SizedBox(width: 4), // Text 간의 공간
-                            Expanded(
-                              child: Text("${course['grade']}학년",
-                                  style: TextStyle(fontSize: 10)),
-                            ),
+                            Text('교수: ${course['professor']}'),
+                            Row(children: [
+                              Text(
+                                  '시간: ${course['time']}    ${course['grade']}학년    ${course['credit']}학점'),
+                            ])
                           ],
                         ),
                         trailing: IconButton(
                           icon: Icon(isInCart(course)
                               ? Icons.remove_shopping_cart
                               : Icons.add_shopping_cart),
-                          onPressed: () => isInCart(course)
-                              ? removeFromCart(course)
-                              : addToCart(course),
+                          onPressed: () {
+                            if (isInCart(course)) {
+                              removeFromCart(course);
+                            } else {
+                              addToCart(course);
+                            }
+                          },
                         ),
+                        isThreeLine: true,
                       );
                     },
                   )
