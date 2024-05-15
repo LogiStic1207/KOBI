@@ -91,7 +91,7 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<http.Response> _makeLoginRequest() {
-    var url = 'http://172.29.64.228:5000/login';
+    var url = 'http://192.168.0.13:5000/login';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -193,7 +193,7 @@ class _LoginPageState extends State<Login> {
                           });
                         },
                       ),
-                      const Text('로그인 유지'),
+                      const Text('자동 로그인'),
                     ],
                   ),
                   const SizedBox(height: 20),

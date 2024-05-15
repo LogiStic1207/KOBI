@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'options.dart';
-import 'package:kobi_3/chatbotpage.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Week Timetable',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: TimetablePage(),
+    );
+  }
+}
 
 class TimetablePage extends StatefulWidget {
   @override
@@ -9,8 +24,13 @@ class TimetablePage extends StatefulWidget {
 }
 
 class _TimetablePageState extends State<TimetablePage> {
-  final List<String> _departmentList = [
-    '학과 선택',
+  final List<String> days = ['월', '화', '수', '목', '금'];
+  final List<int> hours = List.generate(10, (index) => 9 + index);
+  final PanelController _panelController = PanelController();
+  String _selectedDepartment = '학부 선택';
+  final TextEditingController _searchController = TextEditingController();
+  final List<String> departments = [
+    '학부 선택',
     '기계공학부',
     '메카트로닉스공학부',
     '전기ㆍ전자ㆍ통신공학부',
@@ -23,116 +43,48 @@ class _TimetablePageState extends State<TimetablePage> {
     'HRD학과',
     '융합학과'
   ];
+
+  List<Map<String, dynamic>> allCourses = [];
+  List<Map<String, dynamic>> filteredCourses = [];
+  List<Map<String, dynamic>> cartItems = [];
+  bool _isLoading = false;
+
   final String query = r"""
-    query get ($_selectedDepartment: String!) {
-      courses(categoryId:$_selectedDepartment){
+    query getCourses($_selectedDepartment: String!) {
+      courses(categoryId: $_selectedDepartment) {
         id name professor grade credit type1 type2 targetDepartment target
         time place creditDetail limit timeData
       }
     }
   """;
 
-  String _selectedDepartment = '학과 선택';
-  List<Map<String, dynamic>> allCourses = [];
-  List<Map<String, dynamic>> filteredCourses = [];
-  List<Map<String, dynamic>> cartItems = [];
-  final TextEditingController _searchController = TextEditingController();
-  bool _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('KOBI : 시간표 제작'),
-        actions: [
-          Stack(
-            children: <Widget>[
-              if (cartItems.isNotEmpty)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(1),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
-                    ),
-                    child: Text(
-                      '${cartItems.length}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
+      appBar: AppBar(title: Text('주간 시간표')),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(child: buildTimeTable()),
+              buildCart(),
             ],
           ),
-        ],
-      ),
-      drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          _buildDepartmentDropdownAndQueryButton(),
-          _buildQueryResultContainer(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              children: [
-                Container(
-                  height: 65,
-                  child: DrawerHeader(
-                    child: Text('메뉴', style: TextStyle(color: Colors.white)),
-                    decoration: BoxDecoration(color: Colors.blue),
-                  ),
-                ),
-                ListTile(
-                    title: Text('챗봇'),
-                    onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ChatBotPage()))),
-                ListTile(
-                    title: Text('설정'),
-                    onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => OptionsPage()))),
-                Divider(),
-                _buildCartContainer(), // Call to build the cart container
-                Divider(),
-              ],
-            ),
-          ),
-          Container(
-            alignment: Alignment.center,
-            margin: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ListTile(
-              title: Text(
-                '로그아웃',
-                style: TextStyle(color: Colors.white),
-                textAlign: TextAlign.center,
+          SlidingUpPanel(
+            controller: _panelController,
+            panel: buildSlidingPanel(),
+            minHeight: 60,
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+            collapsed: Container(
+              decoration: BoxDecoration(
+                color: Colors.blueGrey,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24.0),
+                    topRight: Radius.circular(24.0)),
               ),
-              onTap: () {
-                // Logout logic goes here
-              },
+              child: Center(
+                  child: Text('과목 검색 및 추가',
+                      style: TextStyle(color: Colors.white))),
             ),
           ),
         ],
@@ -140,321 +92,293 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
-  Widget _buildCartContainer() {
-    return Container(
-      padding: EdgeInsets.all(8),
-      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '장바구니',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Divider(),
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount: cartItems.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(cartItems[index]['name']),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      cartItems.removeAt(index);
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDepartmentDropdownAndQueryButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  Widget buildTimeTable() {
+    return Column(
       children: [
-        IntrinsicWidth(
-          // This widget forces its child to have a width that fits its content
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: false, // Set to false to fit content
-                value: _selectedDepartment,
-                icon: const Icon(Icons.arrow_drop_down),
-                iconSize: 24,
-                iconEnabledColor: Colors.black,
-                items: _departmentList.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() => _selectedDepartment = newValue);
-                  }
-                },
-                dropdownColor: Colors.white,
-              ),
-            ),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          color: Colors.grey[200],
+          child: Row(
+            children: <Widget>[
+              SizedBox(width: 64),
+              ...days
+                  .map((day) => Expanded(
+                        child: Center(
+                            child: Text(day,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                      ))
+                  .toList(),
+            ],
           ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            if (_selectedDepartment != '학과 선택') {
-              fetchCourses();
-            } else {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text("경고"),
-                    content: Text("과목을 선택해주세요."),
-                    actions: [
-                      TextButton(
-                        child: Text("OK"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            }
-          },
-          child: Text('조회'),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Table(
+              columnWidths: {0: FixedColumnWidth(64)},
+              children: hours
+                  .map((hour) => TableRow(
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(8),
+                            color: Colors.grey[100],
+                            child: Text('${hour}시',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          ...days
+                              .map((_) => TableCell(
+                                    child: Container(
+                                      padding: EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        color: Colors.white,
+                                      ),
+                                      child: Text(''),
+                                    ),
+                                  ))
+                              .toList(),
+                        ],
+                      ))
+                  .toList(),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  void fetchCourses() {
-    setState(() {
-      _isLoading = true;
-    });
-  }
-
-  Widget _buildQueryResultContainer() {
-    return Expanded(
-      child: _isLoading
-          ? Query(
-              options: QueryOptions(
-                document: gql(query),
-                variables: {"_selectedDepartment": _selectedDepartment},
-                fetchPolicy: FetchPolicy.noCache,
-              ),
-              builder: (result, {refetch, fetchMore}) {
-                if (result.isLoading) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (result.hasException) {
-                  return Text('Error: ${result.exception.toString()}');
-                } else if (result.data == null ||
-                    result.data!["courses"] == null) {
-                  return Text('No courses available');
-                }
-                allCourses =
-                    List<Map<String, dynamic>>.from(result.data!["courses"]);
-                return _buildCourseTable(allCourses);
-              },
-            )
-          : Center(
-              child:
-                  Text("Select a department and click '조회' to fetch courses.")),
-    );
-  }
-
-  Widget _buildCourseTable(List courses) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    UniqueKey tableKey = UniqueKey();
-
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.all(8),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              labelText: 'Search Courses',
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  setState(() {
-                    filteredCourses = allCourses
-                        .where((course) => course['name']
-                            .toLowerCase()
-                            .contains(_searchController.text.toLowerCase()))
-                        .toList();
-                  });
-                },
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+  Widget buildCart() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16, 8, 16, 16), // Reduced top margin
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: Offset(0, 3), // changes position of shadow
           ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Container(
-            key: tableKey, // 위젯에 새로운 키 할당
-            height: screenHeight / 3,
-            padding: EdgeInsets.all(8),
-            margin: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Scrollbar(
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: MediaQuery.of(context).size.width,
-                  ),
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columns: _buildColumns(),
-                        rows:
-                            courses.map((course) => _buildRow(course)).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 1, // Takes 1/3 of the available space
-          child: Container(
-            padding: EdgeInsets.all(8),
-            margin: EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Text('과목 장바구니',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Expanded(
-                  child: ListView.builder(
+        ],
+      ),
+      height: 200, // Fixed height for the cart
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('장바구니',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          Expanded(
+            child: cartItems.isEmpty
+                ? Center(
+                    child:
+                        Text('장바구니에 과목이 없습니다.', style: TextStyle(fontSize: 14)))
+                : ListView.builder(
                     itemCount: cartItems.length,
                     itemBuilder: (context, index) {
+                      var course = cartItems[index];
                       return ListTile(
-                        title: Text(
-                            '${cartItems[index]['name']} ${cartItems[index]['id']}'),
+                        title: Text(course['name'],
+                            style: TextStyle(fontSize: 14)),
+                        subtitle: Text(
+                            '${course['professor']} - ${course['time']}',
+                            style: TextStyle(fontSize: 12)),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              cartItems.removeAt(index);
-                            });
-                          },
+                          icon: Icon(Icons.remove),
+                          onPressed: () => removeFromCart(course),
                         ),
                       );
                     },
                   ),
-                ),
-              ],
-            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  List<DataColumn> _buildColumns() {
-    return [
-      '추가/삭제',
-      '코드 및 분반',
-      '교과목명',
-      '담당교수',
-      '학년',
-      '학점',
-      '강의구분',
-      '시간',
-      '학강실설',
-      '정원'
-    ].map((header) => DataColumn(label: Text(header))).toList();
+  void performSearch() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredCourses = allCourses.where((course) {
+        return course['name'].toLowerCase().contains(query) ||
+            course['professor'].toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  Widget buildSlidingPanel() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            // This row contains the dropdown and search box and will not scroll.
+            children: [
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Colors.white, // Background color
+                      borderRadius: BorderRadius.circular(8), // Rounded corners
+                      border: Border.all(color: Colors.grey) // Grey border
+                      ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedDepartment,
+                      icon: Icon(Icons.arrow_drop_down, color: Colors.black),
+                      onChanged: (String? newValue) {
+                        if (newValue != null &&
+                            newValue != _selectedDepartment) {
+                          setState(() {
+                            _selectedDepartment = newValue;
+                            fetchCourses();
+                          });
+                        }
+                      },
+                      items: departments
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10), // Spacing between dropdown and text field
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: '과목 / 교수 검색',
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: performSearch,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            // Only this part will scroll.
+            child: !_isLoading
+                ? ListView.builder(
+                    itemCount: filteredCourses.isNotEmpty
+                        ? filteredCourses.length
+                        : allCourses.length,
+                    itemBuilder: (context, index) {
+                      var course = filteredCourses.isNotEmpty
+                          ? filteredCourses[index]
+                          : allCourses[index];
+                      return ListTile(
+                        title: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(course['name'],
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            SizedBox(width: 0.5), // Text 간의 공간
+                            Expanded(
+                              child: Text(course['id'],
+                                  style: TextStyle(fontSize: 12)),
+                            ),
+                            SizedBox(width: 0.5), // Text 간의 공간
+                            Expanded(
+                              child: Text(course['professor'],
+                                  style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                        subtitle: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(course['time'],
+                                  style: TextStyle(fontSize: 10)),
+                            ),
+                            SizedBox(width: 4), // Text 간의 공간
+                            Expanded(
+                              child: Text("${course['grade']}학년",
+                                  style: TextStyle(fontSize: 10)),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(isInCart(course)
+                              ? Icons.remove_shopping_cart
+                              : Icons.add_shopping_cart),
+                          onPressed: () => isInCart(course)
+                              ? removeFromCart(course)
+                              : addToCart(course),
+                        ),
+                      );
+                    },
+                  )
+                : Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void fetchCourses() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      var client = GraphQLProvider.of(context).value;
+      var result = await client.query(
+        QueryOptions(
+          document: gql(query),
+          variables: {'_selectedDepartment': _selectedDepartment},
+        ),
+      );
+
+      if (result.hasException) {
+        print(result.exception.toString());
+        return;
+      }
+
+      setState(() {
+        allCourses = List<Map<String, dynamic>>.from(result.data!['courses']);
+        filteredCourses = [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching courses: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool isInCart(Map<String, dynamic> course) {
+    return cartItems.any((item) => item['id'] == course['id']);
   }
 
   void addToCart(Map<String, dynamic> course) {
-    setState(() {
-      cartItems.add(course);
-    });
+    if (!isInCart(course)) {
+      setState(() {
+        cartItems.add(course);
+      });
+    }
   }
 
   void removeFromCart(Map<String, dynamic> course) {
     setState(() {
-      cartItems.remove(course); // 장바구니 목록에서 해당 과목을 제거
+      cartItems.removeWhere((item) => item['id'] == course['id']);
     });
   }
-
-  bool isInCart(Map<String, dynamic> course) {
-    // cartItems는 과목 리스트를 나타내는 변수입니다. 이 변수는 상위에 정의되어 있어야 합니다.
-    return cartItems.contains(course);
-  }
-
-  DataRow _buildRow(Map<String, dynamic> course) => DataRow(cells: [
-        DataCell(
-          isInCart(course)
-              ? IconButton(
-                  icon: Icon(Icons.indeterminate_check_box, color: Colors.red),
-                  onPressed: () => removeFromCart(course),
-                )
-              : IconButton(
-                  icon: Icon(Icons.add_box, color: Colors.blue),
-                  onPressed: () => addToCart(course),
-                ),
-        ),
-        DataCell(Text(course['id'])),
-        DataCell(Text(course['name'])),
-        DataCell(Text(course['professor'])),
-        DataCell(Text(course['grade'].toString())),
-        DataCell(Text(course['credit'].toString())),
-        DataCell(Text(course['type1'])),
-        DataCell(Text(course['time'])),
-        DataCell(Text(course['creditDetail'])),
-        DataCell(Text(course['limit'].toString())),
-      ]);
 }
