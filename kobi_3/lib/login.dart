@@ -18,38 +18,53 @@ class Login extends StatefulWidget {
 class _LoginPageState extends State<Login> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
-  final ValueNotifier<bool> _isObscure = ValueNotifier<bool>(true);
-  final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
-  bool _isPasswordVisible = false;
-  String userId = "";
-  String userPw = "";
+  bool _isObscure = true;
   BuildContext? _dialogContext;
   bool _isIdSaved = false;
   bool _keepLoggedIn = false;
   int _loginCount = 0;
-  String _lastLoggedInId = "";
+  String _lastLoggedInId = ""; // 마지막 로그인 시도한 ID 저장
 
   @override
   void initState() {
     super.initState();
-    //_loadLoginInfo();
+    _loadPreferences();
   }
 
-/*
-  Future<void> _sendInfotoServer() async {
-    print(_idController.text);
-    print(_pwController.text);
-    //final prefs = await SharedPreferences.getInstance();
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      userId = _idController.text;
-      userPw = _pwController.text;
-    });
-    Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChatBotPage()));
+      _isIdSaved = prefs.getBool('isIdSaved') ?? false;
+      _keepLoggedIn = prefs.getBool('keepLoggedIn') ?? false;
+      _loginCount = prefs.getInt('loginCount') ?? 0;
+      _lastLoggedInId = prefs.getString('lastLoggedInId') ?? '';
 
+      if (_isIdSaved) {
+        _idController.text = prefs.getString('savedId') ?? '';
+      }
+      if (_keepLoggedIn && _loginCount > 0) {
+        _pwController.text = prefs.getString('savedPassword') ?? '';
+        if (_idController.text == _lastLoggedInId) {
+          _sendInfotoServer(); // 자동 로그인 시도
+        }
+      }
+    });
   }
-*/
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('loginCount', _loginCount);
+    prefs.setBool('isIdSaved', _isIdSaved);
+    prefs.setBool('keepLoggedIn', _keepLoggedIn);
+    prefs.setString('lastLoggedInId', _idController.text); // 현재 ID 저장
+    if (_isIdSaved) {
+      prefs.setString('savedId', _idController.text);
+    }
+    if (_keepLoggedIn) {
+      prefs.setString('savedPassword', _pwController.text);
+    }
+  }
+
   Future<void> _sendInfotoServer() async {
     // 새 ID 로그인 시 로그인 카운트 재설정
     if (_lastLoggedInId != _idController.text) {
@@ -77,11 +92,33 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<http.Response> _makeLoginRequest() {
-    var url = 'http://192.168.219.101:5000/login';
+    var url = 'http://192.168.0.13:5000/login';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'id': _idController.text, 'pw': _pwController.text}),
+    );
+  }
+
+  void _showLoadingDialog(bool isFirstLogin) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        _dialogContext = context;
+        String message =
+            isFirstLogin ? "로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다." : "로그인중입니다.";
+        return AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 24),
+              Expanded(child: Text(message))
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -97,7 +134,7 @@ class _LoginPageState extends State<Login> {
           const SizedBox(height: 10),
           TextField(
               controller: isPassword ? _pwController : _idController,
-              obscureText: isPassword ? _isObscure.value : false,
+              obscureText: isPassword ? _isObscure : false,
               decoration: const InputDecoration(
                   border: InputBorder.none,
                   fillColor: Color(0xfff3f3f4),
@@ -159,8 +196,7 @@ class _LoginPageState extends State<Login> {
             Positioned(
               top: -height * .15,
               right: -MediaQuery.of(context).size.width * .4,
-              child:
-                  const BezierContainer(), // Make sure this widget is properly defined elsewhere
+              child: const BezierContainer(),
             ),
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -169,13 +205,36 @@ class _LoginPageState extends State<Login> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(height: height * .2),
-                  _title(), // Ensure this is defined elsewhere in your class
+                  _title(),
                   const SizedBox(height: 50),
                   _entryField("ID"),
                   _entryField("Password", isPassword: true),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _isIdSaved,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _isIdSaved = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('아이디 저장'),
+                      Checkbox(
+                        value: _keepLoggedIn,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _keepLoggedIn = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('자동 로그인'),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   _submitButton(context),
-                  _divider(), // Ensure this is defined elsewhere in your class
+                  _divider(),
                   SizedBox(height: height * .055),
                 ],
               ),
@@ -186,30 +245,9 @@ class _LoginPageState extends State<Login> {
     );
   }
 
-  Widget _title() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-          text: 'KO',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: Color(0xffe46b10)),
-          children: [
-            TextSpan(
-                text: ' : ',
-                style: TextStyle(color: Colors.black, fontSize: 30)),
-            TextSpan(
-                text: 'BI',
-                style: TextStyle(color: Color(0xff0e5289), fontSize: 30)),
-          ]),
-    );
-  }
-
   Widget _submitButton(BuildContext context) {
     return InkWell(
       onTap: _sendInfotoServer,
-
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -231,7 +269,7 @@ class _LoginPageState extends State<Login> {
           ),
         ),
         child: const Text(
-          'Login',
+          '로그인',
           style: TextStyle(fontSize: 20, color: Colors.white),
         ),
       ),
@@ -255,6 +293,26 @@ class _LoginPageState extends State<Login> {
           SizedBox(width: 20),
         ],
       ),
+    );
+  }
+
+  Widget _title() {
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+          text: 'KO',
+          style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              color: Color(0xffe46b10)),
+          children: [
+            TextSpan(
+                text: ' : ',
+                style: TextStyle(color: Colors.black, fontSize: 30)),
+            TextSpan(
+                text: 'BI',
+                style: TextStyle(color: Color(0xff0e5289), fontSize: 30)),
+          ]),
     );
   }
 }
