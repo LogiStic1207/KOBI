@@ -209,7 +209,7 @@ class _LoginPageState extends State<Login> {
   Widget _submitButton(BuildContext context) {
     return InkWell(
       onTap: _sendInfotoServer,
-      onTap: _sendInfotoServer,
+
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(vertical: 15),
