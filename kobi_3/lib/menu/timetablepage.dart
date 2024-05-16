@@ -357,7 +357,12 @@ class _TimetablePageState extends State<TimetablePage> {
                             Text('교수: ${course['professor']}'),
                             Row(children: [
                               Text(
-                                  '시간: ${course['time']}    ${course['grade']}학년    ${course['credit']}학점'),
+                                '시간: ${course['time']}    ${course['grade']}학년    ${course['credit']}학점',
+                                style: TextStyle(
+                                  fontSize: 12, // 폰트 크기
+                                  color: Colors.grey[800], // 글자 색상
+                                ),
+                              ),
                             ])
                           ],
                         ),
