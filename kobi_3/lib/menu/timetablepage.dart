@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'dart:math';
 
 void main() => runApp(MyApp());
 
@@ -112,6 +112,39 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
+  Map<String, List<RangeValues>> parseCourseTime(String timeString) {
+    RegExp exp = RegExp(r"([월화수목금])(\d{2})A~(\d{2})B");
+    Iterable<RegExpMatch> matches = exp.allMatches(timeString);
+    Map<String, List<RangeValues>> schedule = {};
+
+    for (var match in matches) {
+      String day = match.group(1)!; // 요일
+      int startHour = int.parse(match.group(2)!) - 1; // 시작 시간
+      int endHour = int.parse(match.group(3)!); // 종료 시간
+
+      // null 검사 후 리스트에 시간 범위 추가
+      (schedule[day] ??= []).add(RangeValues(9.0 + startHour, 9.0 + endHour));
+    }
+    return schedule;
+  }
+
+  Map<String, Color> courseColors = {};
+  List<Color> availableColors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.cyan,
+    Colors.amber,
+    Colors.teal
+  ];
+
+  Color getColorForCourse(String courseId) {
+    return courseColors.putIfAbsent(courseId,
+        () => availableColors[Random().nextInt(availableColors.length)]);
+  }
+
   Widget buildTimeTable() {
     return Column(
       children: [
@@ -120,7 +153,7 @@ class _TimetablePageState extends State<TimetablePage> {
           color: Colors.grey[200],
           child: Row(
             children: <Widget>[
-              SizedBox(width: 64),
+              SizedBox(width: 64), // 첫 번째 열은 시간을 표시
               ...days.map((day) => Expanded(
                     child: Center(
                         child: Text(day,
@@ -143,16 +176,9 @@ class _TimetablePageState extends State<TimetablePage> {
                             child: Text('${hour}시',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                          ...days.map((_) => TableCell(
-                                child: Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    color: Colors.white,
-                                  ),
-                                  child: Text(''),
-                                ),
-                              ))
+                          ...days
+                              .map((day) => buildTimeTableCell(day, hour))
+                              .toList(),
                         ],
                       ))
                   .toList(),
@@ -160,6 +186,36 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget buildTimeTableCell(String day, int hour) {
+    List<Map<String, dynamic>> overlappingCourses = [];
+
+    for (var course in cartItems) {
+      Map<String, List<RangeValues>> courseTimes = course['parsedTime'];
+      if (courseTimes.containsKey(day) && courseTimes[day] != null) {
+        for (var range in courseTimes[day]!) {
+          // '!'를 사용하여 null이 아님을 확실히 함
+          if (hour >= range.start && hour < range.end) {
+            overlappingCourses.add(course);
+          }
+        }
+      }
+    }
+
+    return TableCell(
+      child: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          color: overlappingCourses.isNotEmpty
+              ? overlappingCourses.first['color']
+              : Colors.white,
+        ),
+        child: Text(overlappingCourses.map((c) => c['name']).join(', '),
+            overflow: TextOverflow.ellipsis),
+      ),
     );
   }
 
@@ -313,7 +369,7 @@ class _TimetablePageState extends State<TimetablePage> {
                             if (isInCart(course)) {
                               removeFromCart(course);
                             } else {
-                              addToCart(course);
+                              addToCart(context, course);
                             }
                           },
                         ),
@@ -363,10 +419,46 @@ class _TimetablePageState extends State<TimetablePage> {
     return cartItems.any((item) => item['id'] == course['id']);
   }
 
-  void addToCart(Map<String, dynamic> course) {
-    if (!isInCart(course)) {
+  void addToCart(BuildContext context, Map<String, dynamic> course) {
+    // 겹침 검사
+    bool hasOverlap = cartItems.any((existingCourse) {
+      Map<String, List<RangeValues>> existingTimes =
+          existingCourse['parsedTime'];
+      Map<String, List<RangeValues>> newCourseTimes =
+          parseCourseTime(course['time']);
+      return existingTimes.keys.any((day) =>
+          newCourseTimes[day]?.any((newRange) =>
+              existingTimes[day]?.any((existingRange) =>
+                  newRange.start < existingRange.end &&
+                  newRange.end > existingRange.start) ??
+              false) ??
+          false);
+    });
+
+    if (hasOverlap) {
+      // 다이얼로그 표시
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('경고'),
+            content: Text('추가하려는 과목의 시간이 이미 있는 과목과 겹칩니다.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('확인'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                },
+              )
+            ],
+          );
+        },
+      );
+    } else {
       setState(() {
         cartItems.add(course);
+        course['parsedTime'] = parseCourseTime(course['time']);
+        course['color'] = getColorForCourse(course['id']);
       });
     }
   }
