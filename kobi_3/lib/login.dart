@@ -92,7 +92,7 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<http.Response> _makeLoginRequest() {
-    var url = 'http://192.168.0.13:5000/login';
+    var url = 'http://192.168.219.101:5000/login';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -143,41 +143,7 @@ class _LoginPageState extends State<Login> {
       ),
     );
   }
-  Future<void> _savePreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setInt('loginCount', _loginCount);
-    prefs.setBool('isIdSaved', _isIdSaved);
-    prefs.setBool('keepLoggedIn', _keepLoggedIn);
-    prefs.setString('lastLoggedInId', _idController.text); // 현재 ID 저장
-    if (_isIdSaved) {
-      prefs.setString('savedId', _idController.text);
-    }
-    if (_keepLoggedIn) {
-      prefs.setString('savedPassword', _pwController.text);
-    }
-  }
 
-  void _showLoadingDialog(bool isFirstLogin) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        _dialogContext = context;
-        String message =
-            isFirstLogin ? "로그인중입니다. 최초 1회 로그인 시 시간이 걸릴 수 있습니다." : "로그인중입니다.";
-        return AlertDialog(
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 24),
-              Expanded(child: Text(message))
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

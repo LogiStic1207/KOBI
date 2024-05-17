@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:kobi_3/menu/mypage.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
@@ -5,6 +6,7 @@ import 'menu/options.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dashboard.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatBotPage extends StatefulWidget {
   @override
@@ -15,8 +17,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
   //String _intent = "위치";
   //String _ner = "해울관";
   String _answer = "초기 응답입니다.";
+  String _menulink = "학식 메뉴 링크입니다.";
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
+  //bool ismenulink = false;
 
   @override
   void initState() {
@@ -47,38 +51,48 @@ class _ChatBotPageState extends State<ChatBotPage> {
       });
       _controller.clear();
       // Send user message to the server and wait for the response
-      var url = 'http://192.168.0.13:5000/query';
+      var url = 'http://192.168.219.101:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'query': text}));
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
-        print(responseData);
+        //print(responseData);
 
         setState(() {
           _answer = responseData['Answer'];
-
-          //_intent = responseData['Intent'];
-          // _intent = responseData['Intent'];
-          // _ner = responseData['Ner'][0];
-          _messages.add({"text": _answer, "isBot": true});
-          //_isSending = false;
+          if (responseData.containsKey('Link')) {
+            _menulink = responseData['Link'];
+            _messages.add({"text": _answer, "isBot": true, "Link": _menulink});
+          } else {
+            _messages.add({"text": _answer, "isBot": true});
+          }
         });
-        print(_answer);
+        //print(_messages);
       } else {
         print('Failed to send message');
         setState(() {
           _messages.add({"text": "Failed to fetch response", "isBot": true});
-          //_isSending = false;
         });
       }
     }
   }
 
+  Future<void> _launchUrl() async {
+    if (!await launchUrl(Uri.parse(_menulink))) {
+      throw Exception('링크 오류!');
+    }
+  }
+
+  bool checkLinkMessage(Map<String, dynamic> _message) {
+    return _message.containsKey('Link');
+  }
+
   Widget _buildMessageBubble(Map<String, dynamic> _message) {
     bool isBot = _message["isBot"];
-
+    bool isLinkMessage = checkLinkMessage(_message);
+    //print(isLinkMessage);
     // 챗봇 프로필과 이름을 가로로 나열하는 위젯
     Widget botHeader = Row(
       mainAxisSize: MainAxisSize.min,
@@ -90,6 +104,25 @@ class _ChatBotPageState extends State<ChatBotPage> {
       ],
     );
 
+    Widget generalText = Text(_message['text'],
+        style: TextStyle(fontSize: 16, color: Colors.black));
+
+    Widget linkText = Column(
+      children: [
+        Text(
+          _message['text'],
+          style: TextStyle(fontSize: 16, color: Colors.black),
+        ),
+        RichText(
+            text: TextSpan(
+                text: _menulink,
+                style: const TextStyle(color: Colors.blueAccent),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () {
+                    _launchUrl();
+                  }))
+      ],
+    );
     // 메시지 텍스트
     Widget messageText = Container(
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -108,10 +141,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           )
         ],
       ),
-      child: Text(
-        _message['text'],
-        style: TextStyle(fontSize: 16, color: Colors.black),
-      ),
+      child: isLinkMessage ? linkText : generalText,
     );
 
     return Padding(
