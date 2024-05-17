@@ -92,7 +92,7 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<http.Response> _makeLoginRequest() {
-    var url = 'http://192.168.219.101:5000/login';
+    var url = 'http:///login';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
