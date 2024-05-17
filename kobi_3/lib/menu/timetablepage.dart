@@ -63,36 +63,24 @@ class _TimetablePageState extends State<TimetablePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('주간 시간표')),
-      body: Stack(
+      body: Column(
         children: [
-          SingleChildScrollView(
-            // This makes the column scrollable
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // Important for a scrollable view
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height *
-                      0.8, // Adjust height as necessary
-                  child: buildTimeTable(),
-                ),
-                SizedBox(height: 120), // Space for the cart
-              ],
-            ),
+          // 시간표 부분을 화면의 80% 크기로 설정
+          Expanded(
+            flex: 6, // 8:2 비율로 시간표와 장바구니 공간을 나눔
+            child: buildTimeTable(),
           ),
-          Positioned(
-            bottom: MediaQuery.of(context)
-                .padding
-                .bottom, // Position your cart at the bottom
-            left: 0,
-            right: 0,
+          // 장바구니를 화면의 20% 크기로 설정
+          Expanded(
+            flex: 3,
             child: buildCart(),
           ),
+          // 슬라이딩 패널
           SlidingUpPanel(
             controller: _panelController,
             panel: buildSlidingPanel(),
             minHeight: 60,
-            maxHeight: MediaQuery.of(context).size.height *
-                0.5, // Half the screen height
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
             collapsed: Container(
               decoration: BoxDecoration(
                 color: Colors.blueGrey,
@@ -191,14 +179,18 @@ class _TimetablePageState extends State<TimetablePage> {
 
   Widget buildTimeTableCell(String day, int hour) {
     List<Map<String, dynamic>> overlappingCourses = [];
+    bool showCourseInfo = false;
 
     for (var course in cartItems) {
       Map<String, List<RangeValues>> courseTimes = course['parsedTime'];
       if (courseTimes.containsKey(day) && courseTimes[day] != null) {
         for (var range in courseTimes[day]!) {
-          // '!'를 사용하여 null이 아님을 확실히 함
           if (hour >= range.start && hour < range.end) {
             overlappingCourses.add(course);
+            int middleHour = ((range.start + range.end) / 2).floor();
+            if (hour == middleHour) {
+              showCourseInfo = true;
+            }
           }
         }
       }
@@ -206,15 +198,34 @@ class _TimetablePageState extends State<TimetablePage> {
 
     return TableCell(
       child: Container(
-        padding: EdgeInsets.all(8),
+        height: 40, // 고정된 높이를 크게 설정
+        padding: EdgeInsets.all(4), // 패딩을 줄임
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           color: overlappingCourses.isNotEmpty
               ? overlappingCourses.first['color']
               : Colors.white,
         ),
-        child: Text(overlappingCourses.map((c) => c['name']).join(', '),
-            overflow: TextOverflow.ellipsis),
+        child: overlappingCourses.isNotEmpty && showCourseInfo
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center, // 수직 중앙 정렬
+                children: [
+                  Text(
+                    overlappingCourses.first['name'],
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.bold), // 폰트 크기를 줄임
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    overlappingCourses.first['professor'],
+                    style: TextStyle(
+                        fontSize: 9, color: Colors.grey[800]), // 폰트 크기를 줄임
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              )
+            : null,
       ),
     );
   }
@@ -357,9 +368,9 @@ class _TimetablePageState extends State<TimetablePage> {
                             Text('교수: ${course['professor']}'),
                             Row(children: [
                               Text(
-                                '시간: ${course['time']}    ${course['grade']}학년    ${course['credit']}학점',
+                                '시간: ${course['time']}   ${course['grade']}학년   ${course['credit']}학점',
                                 style: TextStyle(
-                                  fontSize: 12, // 폰트 크기
+                                  fontSize: 10.9, // 폰트 크기
                                   color: Colors.grey[800], // 글자 색상
                                 ),
                               ),

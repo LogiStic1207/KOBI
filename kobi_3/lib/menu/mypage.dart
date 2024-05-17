@@ -25,7 +25,12 @@ class _MyPageState extends State<MyPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  child: Text('기본'),
+                  child: Text(
+                    '기본',
+                    style: TextStyle(
+                      color: _showBasicInfo ? Colors.white : Colors.blue,
+                    ),
+                  ),
                   onPressed: () => setState(() => _showBasicInfo = true),
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.resolveWith<Color>(
@@ -33,16 +38,12 @@ class _MyPageState extends State<MyPage> {
                         return _showBasicInfo ? Colors.blue : Colors.white;
                       },
                     ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  child: Text('성적'),
-                  onPressed: () => setState(() => _showBasicInfo = false),
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    side: MaterialStateProperty.resolveWith<BorderSide>(
                       (Set<MaterialState> states) {
-                        return _showBasicInfo ? Colors.white : Colors.blue;
+                        return BorderSide(
+                          color: Colors.blue,
+                          width: 2.0,
+                        );
                       },
                     ),
                   ),
@@ -51,7 +52,9 @@ class _MyPageState extends State<MyPage> {
             ),
           ),
           Expanded(
-            child: _showBasicInfo ? _buildBasicInfo() : _buildGradesInfo(),
+            child: _showBasicInfo
+                ? _buildBasicInfo()
+                : Center(child: Text('학생 정보가 없습니다')),
           ),
         ],
       ),
@@ -63,17 +66,8 @@ class _MyPageState extends State<MyPage> {
       children: <Widget>[
         _buildTitleBar('학생기본정보'),
         _buildInfoBox('이름 (학번)', '홍길동 (2019136102)'),
-        _buildInfoBox('학년, 성별, 학적상태', '4, 남자, 재학'),
         _buildInfoBox('학부(과)', '컴퓨터공학부'),
-      ],
-    );
-  }
-
-  Widget _buildGradesInfo() {
-    return ListView(
-      children: <Widget>[
-        _buildTitleBar('성적정보'),
-        _buildInfoBox('2019-1학기', '신청 : 16, 이수: 16, 평점: 2.97'),
+        _buildInfoBox('이메일', 'joon4555@koreatech.ac.kr'),
       ],
     );
   }
