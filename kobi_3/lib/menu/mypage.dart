@@ -25,15 +25,47 @@ class _MyPageState extends State<MyPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+<<<<<<< HEAD
                 Text(
                   '학생정보',
                   style: TextStyle(color: Colors.blue),
+=======
+                ElevatedButton(
+                  child: Text(
+                    '기본',
+                    style: TextStyle(
+                      color: _showBasicInfo ? Colors.white : Colors.blue,
+                    ),
+                  ),
+                  onPressed: () => setState(() => _showBasicInfo = true),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        return _showBasicInfo ? Colors.blue : Colors.white;
+                      },
+                    ),
+                    side: MaterialStateProperty.resolveWith<BorderSide>(
+                      (Set<MaterialState> states) {
+                        return BorderSide(
+                          color: Colors.blue,
+                          width: 2.0,
+                        );
+                      },
+                    ),
+                  ),
+>>>>>>> c393d433840361e58a5dffa036be9ebeb9d9e5ea
                 ),
               ],
             ),
           ),
           Expanded(
+<<<<<<< HEAD
             child: _buildBasicInfo(),
+=======
+            child: _showBasicInfo
+                ? _buildBasicInfo()
+                : Center(child: Text('학생 정보가 없습니다')),
+>>>>>>> c393d433840361e58a5dffa036be9ebeb9d9e5ea
           ),
         ],
       ),
@@ -43,6 +75,7 @@ class _MyPageState extends State<MyPage> {
   Widget _buildBasicInfo() {
     return ListView(
       children: <Widget>[
+<<<<<<< HEAD
         Text(_namenum),
         Text(_email),
         Text(_coursehistory),
@@ -51,6 +84,15 @@ class _MyPageState extends State<MyPage> {
   }
 
 
+=======
+        _buildTitleBar('학생기본정보'),
+        _buildInfoBox('이름 (학번)', '홍길동 (2019136102)'),
+        _buildInfoBox('학부(과)', '컴퓨터공학부'),
+        _buildInfoBox('이메일', 'joon4555@koreatech.ac.kr'),
+      ],
+    );
+  }
+>>>>>>> c393d433840361e58a5dffa036be9ebeb9d9e5ea
 
   Widget _buildTitleBar(String title) {
     return Container(
