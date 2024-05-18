@@ -80,6 +80,14 @@ class _LoginPageState extends State<Login> {
         Navigator.of(_dialogContext!).pop();
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => DashboardPage()));
+        final data = json.decode(response.body);
+        final String namenum = data['StudentNumber'];
+        final String email = data['Email'];
+        final List<dynamic> courseHistory = data['CourseHistory'];
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('_namenum', namenum);
+        await prefs.setString('_email', email);
+        await prefs.setString('_coursehistory', json.encode(courseHistory));
       } else {
         Navigator.of(_dialogContext!).pop();
         _showToast('로그인 실패');
