@@ -6,6 +6,8 @@ import 'menu/mypage.dart';
 import 'menu/options.dart';
 import 'chatbotpage.dart';
 import 'style/styles.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kobi_3/login.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +31,48 @@ class MyApp extends StatelessWidget {
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({Key? key}) : super(key: key);
+
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('savedId');
+    await prefs.remove('savedPassword');
+    await prefs.remove('isIdSaved');
+    await prefs.remove('keepLoggedIn');
+    await prefs.remove('loginCount');
+    await prefs.remove('lastLoggedInId');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
+  Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('로그아웃'),
+          content: const Text('로그아웃 하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await _logout(context);
+              },
+              child: const Text('예'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 알림창 닫기
+              },
+              child: const Text('아니오'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +103,8 @@ class DashboardPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BusChoosePage()), //mypage로 변경해야함!!
+                  MaterialPageRoute(
+                      builder: (context) => MyPage()), //mypage로 변경해야함!!
                 );
               },
             ),
@@ -88,7 +133,7 @@ class DashboardPage extends StatelessWidget {
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        // Add your logout functionality here
+                        _showLogoutConfirmationDialog(context);
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -188,13 +233,18 @@ class DashboardPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ChatBotCard(),
-                        const SizedBox(height: 60),
-                        TimetableCard(),
-                      ],
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ChatBotCard(),
+                          const SizedBox(height: 60),
+                          TimetableCard(),
+                          const SizedBox(height: 60),
+                          BusInfoCard(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -232,16 +282,17 @@ class ChatBotCard extends StatelessWidget {
           },
           child: Container(
             width: double.infinity,
-            height: 250,
+            height: 150,
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 105.0), // 원하는 값으로 조절
+                  padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
                   child: Icon(Icons.add, color: Colors.white, size: 40),
                 ),
                 // Spacer를 제거하고 SizedBox로 조절
@@ -304,6 +355,61 @@ class TimetableCard extends StatelessWidget {
                 Spacer(),
                 Text(
                   '시간표 제작',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+                SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class BusInfoCard extends StatelessWidget {
+  const BusInfoCard({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 0,
+          top: -40,
+          child: SpeechBubble(
+            text: '버스 시간표를 확인하세요',
+            color: Color(0xfff39801),
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => BusChoosePage()),
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            height: 150,
+            decoration: BoxDecoration(
+              color: Color(0xff30619c),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
+                  child: Icon(Icons.add, color: Colors.white, size: 40),
+                ),
+                Spacer(),
+                Text(
+                  '버스 시간표 확인',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
