@@ -49,18 +49,6 @@ class _MyPageState extends State<MyPage> {
         ));
   }
 
-  /*
-  Widget _buildBasicInfo() {
-    return ListView(
-      children: <Widget>[
-        Text('이름(학번): $_namenum'),
-        Text('이메일: $_email'),
-        Text('수강강의(분반):'),
-        ..._coursehistory.map((course) => Text(course.toString())).toList(),
-      ],
-    );
-  }
-  */
   Widget _buildUserInfoCard(String label, String value) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8.0),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kobi_3/menu/shuttlecitychoose.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/inquiry_page.dart';
 import 'menu/mypage.dart';
@@ -58,7 +59,7 @@ class DashboardPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MyPage()),
+                  MaterialPageRoute(builder: (context) => BusChoosePage()),
                 );
               },
             ),

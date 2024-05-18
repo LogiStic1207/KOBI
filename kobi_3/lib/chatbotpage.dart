@@ -16,7 +16,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   String _menulink = "학식 메뉴 링크입니다.";
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
-  //bool ismenulink = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -36,6 +36,17 @@ class _ChatBotPageState extends State<ChatBotPage> {
           }
         }
   """;
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
 
   void _sendMessage() async {
     final text = _controller.text.trim();
@@ -44,6 +55,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         _messages.add({"text": text, "isBot": false});
       });
       _controller.clear();
+      _scrollToEnd();
       // Send user message to the server and wait for the response
       var url = 'http://192.168.219.101:5000/query';
       var response = await http.post(Uri.parse(url),
@@ -66,10 +78,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
           }
         });
         //print(_messages);
+        _scrollToEnd();
       } else {
         setState(() {
           _messages.add({"text": "Failed to fetch response", "isBot": true});
         });
+        _scrollToEnd();
       }
     }
   }
@@ -190,6 +204,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           Container(
             height: MediaQuery.of(context).size.height - 136,
             child: ListView.builder(
+                controller: _scrollController,
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   return _buildMessageBubble(_messages[index]);
