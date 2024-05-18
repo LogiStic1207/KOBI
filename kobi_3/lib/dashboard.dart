@@ -59,7 +59,7 @@ class DashboardPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BusChoosePage()),
+                  MaterialPageRoute(builder: (context) => BusChoosePage()), //mypage로 변경해야함!!
                 );
               },
             ),

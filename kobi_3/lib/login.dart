@@ -5,6 +5,7 @@ import 'Widget/bezierContainer.dart';
 import 'chatbotpage.dart';
 import 'dashboard.dart';
 import 'dart:convert';
+import 'dart:async';
 
 class Login extends StatefulWidget {
   final String? title;
@@ -45,6 +46,7 @@ class _LoginPageState extends State<Login> {
       if (_keepLoggedIn && _loginCount > 0) {
         _pwController.text = prefs.getString('savedPassword') ?? '';
         if (_idController.text == _lastLoggedInId) {
+          Future.delayed(Duration(seconds: 2)); //2초 의도적 딜레이 OpenGL ES 상태 불일치: OpenGL ES 상태가 예상과 일치하지 않을 때 발생할 수 있습니다.
           _sendInfotoServer(); // 자동 로그인 시도
         }
       }

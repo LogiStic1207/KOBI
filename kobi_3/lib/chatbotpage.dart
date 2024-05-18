@@ -14,6 +14,7 @@ class ChatBotPage extends StatefulWidget {
 class _ChatBotPageState extends State<ChatBotPage> {
   String _answer = "초기 응답입니다.";
   String _menulink = "학식 메뉴 링크입니다.";
+  String _hasMap = "맵 플래그입니다.";
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
@@ -71,10 +72,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
           if (responseData.containsKey('Link')) {
             _menulink = responseData['Link'];
             _messages.add({"text": _answer, "isBot": true, "Link": _menulink});
-          } else if (responseData.containsKey('Img')) {
-            _messages.add({"text": _answer, "isBot": true, "Img": "test"});
           } else {
-            _messages.add({"text": _answer, "isBot": true});
+            _hasMap = responseData['Img'];
+            _messages.add({"text": _answer, "isBot": true, "Img": _hasMap});
           }
         });
         //print(_messages);
@@ -99,7 +99,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   bool checkImgMessage(Map<String, dynamic> _message) {
-    return _message.containsKey('Img');
+    return _message.containsKey("Img") && _message["Img"] == "map";
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> _message) {
