@@ -59,6 +59,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
           if (responseData.containsKey('Link')) {
             _menulink = responseData['Link'];
             _messages.add({"text": _answer, "isBot": true, "Link": _menulink});
+          } else if (responseData.containsKey('Img')) {
+            _messages.add({"text": _answer, "isBot": true, "Img": "test"});
           } else {
             _messages.add({"text": _answer, "isBot": true});
           }
@@ -82,9 +84,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
     return _message.containsKey('Link');
   }
 
+  bool checkImgMessage(Map<String, dynamic> _message) {
+    return _message.containsKey('Img');
+  }
+
   Widget _buildMessageBubble(Map<String, dynamic> _message) {
     bool isBot = _message["isBot"];
     bool isLinkMessage = checkLinkMessage(_message);
+    bool isImgMessage = checkImgMessage(_message);
     //print(isLinkMessage);
     // 챗봇 프로필과 이름을 가로로 나열하는 위젯
     Widget botHeader = Row(
@@ -101,10 +108,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
     Widget linkText = Column(
       children: [
-        Text(
-          _message['text'],
-          style: TextStyle(fontSize: 16, color: Colors.black),
-        ),
+        generalText,
         RichText(
             text: TextSpan(
                 text: _menulink,
@@ -115,6 +119,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
                   }))
       ],
     );
+
+    Widget imgText = Column(
+      children: [
+        generalText,
+        Image.asset('assets/testmap.png', width: 400, height: 300),
+      ],
+    );
+
     // 메시지 텍스트
     Widget messageText = Container(
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -131,7 +143,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
           )
         ],
       ),
-      child: isLinkMessage ? linkText : generalText,
+      child: isLinkMessage
+          ? linkText
+          : isImgMessage
+              ? imgText
+              : generalText,
     );
 
     return Padding(
