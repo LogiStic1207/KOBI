@@ -74,8 +74,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   List<Widget> _getFilteredCards() {
     List<Widget> cards = [];
+    double speechBubbleTop =
+        selectedTab == 'Favourite' ? 60 : 2; // Favourite일 때 speechBubble 위치 조정
     if (selectedTab == 'All' || selectedTab == 'Recommended') {
-      cards.add(ChatBotCard(onTap: () => _incrementCount('ChatBot')));
+      cards.add(ChatBotCard(
+          onTap: () => _incrementCount('ChatBot'),
+          speechBubbleTop: speechBubbleTop));
       cards.add(const SizedBox(height: 60));
       cards.add(TimetableCard(onTap: () => _incrementCount('Timetable')));
       cards.add(const SizedBox(height: 60));
@@ -83,13 +87,19 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     if (selectedTab == 'Favourite') {
       if (chatBotCount >= timetableCount && chatBotCount >= busInfoCount) {
-        cards.add(ChatBotCard(onTap: () => _incrementCount('ChatBot')));
+        cards.add(ChatBotCard(
+            onTap: () => _incrementCount('ChatBot'),
+            speechBubbleTop: speechBubbleTop));
       } else if (timetableCount >= chatBotCount &&
           timetableCount >= busInfoCount) {
-        cards.add(TimetableCard(onTap: () => _incrementCount('Timetable')));
+        cards.add(TimetableCard(
+            onTap: () => _incrementCount('Timetable'),
+            speechBubbleTop: speechBubbleTop));
       } else if (busInfoCount >= chatBotCount &&
           busInfoCount >= timetableCount) {
-        cards.add(BusInfoCard(onTap: () => _incrementCount('BusInfo')));
+        cards.add(BusInfoCard(
+            onTap: () => _incrementCount('BusInfo'),
+            speechBubbleTop: speechBubbleTop));
       }
     }
     return cards;
@@ -351,7 +361,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
 class ChatBotCard extends StatelessWidget {
   final VoidCallback onTap;
-  const ChatBotCard({Key? key, required this.onTap}) : super(key: key);
+  final double speechBubbleTop;
+  const ChatBotCard({Key? key, required this.onTap, this.speechBubbleTop = 2})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +372,7 @@ class ChatBotCard extends StatelessWidget {
       children: [
         Positioned(
           left: 0,
-          top: 2,
+          top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '새 채팅창을 만드세요. 코비가 원하는것을 알려드려요',
             color: Color(0xfff39801),
@@ -418,7 +430,10 @@ class ChatBotCard extends StatelessWidget {
 
 class TimetableCard extends StatelessWidget {
   final VoidCallback onTap;
-  const TimetableCard({Key? key, required this.onTap}) : super(key: key);
+  final double speechBubbleTop;
+  const TimetableCard(
+      {Key? key, required this.onTap, this.speechBubbleTop = -40})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +442,7 @@ class TimetableCard extends StatelessWidget {
       children: [
         Positioned(
           left: 0,
-          top: -40,
+          top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '새 시간표를 생성해보세요',
             color: Color(0xfff39801),
@@ -481,7 +496,9 @@ class TimetableCard extends StatelessWidget {
 
 class BusInfoCard extends StatelessWidget {
   final VoidCallback onTap;
-  const BusInfoCard({Key? key, required this.onTap}) : super(key: key);
+  final double speechBubbleTop;
+  const BusInfoCard({Key? key, required this.onTap, this.speechBubbleTop = -40})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +507,7 @@ class BusInfoCard extends StatelessWidget {
       children: [
         Positioned(
           left: 0,
-          top: -40,
+          top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '버스 시간표를 확인하세요',
             color: Color(0xfff39801),

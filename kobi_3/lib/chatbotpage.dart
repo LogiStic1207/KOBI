@@ -145,7 +145,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       decoration: BoxDecoration(
-        color: isBot ? Colors.lightBlue[100] : Colors.grey[300],
+        color: isBot ? Colors.lightBlue[100] : Color(0xffe46b10),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
