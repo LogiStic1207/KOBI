@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:kobi_3/menu/shuttlecitychoose.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/inquiry_page.dart';
 import 'menu/mypage.dart';
 import 'menu/options.dart';
 import 'chatbotpage.dart';
 import 'style/styles.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kobi_3/login.dart';
 
 void main() {
@@ -29,8 +28,72 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
+
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  String selectedTab = 'All';
+  int chatBotCount = 0;
+  int timetableCount = 0;
+  int busInfoCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      chatBotCount = prefs.getInt('chatBotCount') ?? 0;
+      timetableCount = prefs.getInt('timetableCount') ?? 0;
+      busInfoCount = prefs.getInt('busInfoCount') ?? 0;
+    });
+  }
+
+  Future<void> _incrementCount(String card) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      if (card == 'ChatBot') {
+        chatBotCount++;
+        prefs.setInt('chatBotCount', chatBotCount);
+      } else if (card == 'Timetable') {
+        timetableCount++;
+        prefs.setInt('timetableCount', timetableCount);
+      } else if (card == 'BusInfo') {
+        busInfoCount++;
+        prefs.setInt('busInfoCount', busInfoCount);
+      }
+    });
+  }
+
+  List<Widget> _getFilteredCards() {
+    List<Widget> cards = [];
+    if (selectedTab == 'All' || selectedTab == 'Recommended') {
+      cards.add(ChatBotCard(onTap: () => _incrementCount('ChatBot')));
+      cards.add(const SizedBox(height: 60));
+      cards.add(TimetableCard(onTap: () => _incrementCount('Timetable')));
+      cards.add(const SizedBox(height: 60));
+      cards.add(BusInfoCard(onTap: () => _incrementCount('BusInfo')));
+    }
+    if (selectedTab == 'Favourite') {
+      if (chatBotCount >= timetableCount && chatBotCount >= busInfoCount) {
+        cards.add(ChatBotCard(onTap: () => _incrementCount('ChatBot')));
+      } else if (timetableCount >= chatBotCount &&
+          timetableCount >= busInfoCount) {
+        cards.add(TimetableCard(onTap: () => _incrementCount('Timetable')));
+      } else if (busInfoCount >= chatBotCount &&
+          busInfoCount >= timetableCount) {
+        cards.add(BusInfoCard(onTap: () => _incrementCount('BusInfo')));
+      }
+    }
+    return cards;
+  }
 
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -220,15 +283,50 @@ class DashboardPage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'All',
-                        style: AppStyle.m12b
-                            .copyWith(decoration: TextDecoration.underline),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedTab = 'All';
+                          });
+                        },
+                        child: Text(
+                          'All',
+                          style: selectedTab == 'All'
+                              ? AppStyle.m12b.copyWith(
+                                  decoration: TextDecoration.underline)
+                              : AppStyle.m12bt,
+                        ),
                       ),
                       const SizedBox(width: 30),
-                      Text('Favourite', style: AppStyle.m12bt),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedTab = 'Favourite';
+                          });
+                        },
+                        child: Text(
+                          'Favourite',
+                          style: selectedTab == 'Favourite'
+                              ? AppStyle.m12b.copyWith(
+                                  decoration: TextDecoration.underline)
+                              : AppStyle.m12bt,
+                        ),
+                      ),
                       const SizedBox(width: 30),
-                      Text('Recommended', style: AppStyle.m12bt),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedTab = 'Recommended';
+                          });
+                        },
+                        child: Text(
+                          'Recommended',
+                          style: selectedTab == 'Recommended'
+                              ? AppStyle.m12b.copyWith(
+                                  decoration: TextDecoration.underline)
+                              : AppStyle.m12bt,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -237,13 +335,7 @@ class DashboardPage extends StatelessWidget {
                       scrollDirection: Axis.vertical,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ChatBotCard(),
-                          const SizedBox(height: 60),
-                          TimetableCard(),
-                          const SizedBox(height: 60),
-                          BusInfoCard(),
-                        ],
+                        children: _getFilteredCards(),
                       ),
                     ),
                   ),
@@ -258,7 +350,8 @@ class DashboardPage extends StatelessWidget {
 }
 
 class ChatBotCard extends StatelessWidget {
-  const ChatBotCard({Key? key}) : super(key: key);
+  final VoidCallback onTap;
+  const ChatBotCard({Key? key, required this.onTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +360,7 @@ class ChatBotCard extends StatelessWidget {
       children: [
         Positioned(
           left: 0,
-          top: -40,
+          top: 2,
           child: SpeechBubble(
             text: '새 채팅창을 만드세요. 코비가 원하는것을 알려드려요',
             color: Color(0xfff39801),
@@ -275,17 +368,25 @@ class ChatBotCard extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ChatBotPage()),
-            );
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ChatBotPage()));
           },
           child: Container(
+            margin:
+                const EdgeInsets.only(top: 40), // Added margin to shift down
             width: double.infinity,
             height: 150,
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(0, 3), // changes position of shadow
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -295,9 +396,7 @@ class ChatBotCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
                   child: Icon(Icons.add, color: Colors.white, size: 40),
                 ),
-                // Spacer를 제거하고 SizedBox로 조절
                 SizedBox(height: 20),
-                Spacer(),
                 Text(
                   '챗봇',
                   style: TextStyle(
@@ -316,7 +415,8 @@ class ChatBotCard extends StatelessWidget {
 }
 
 class TimetableCard extends StatelessWidget {
-  const TimetableCard({Key? key}) : super(key: key);
+  final VoidCallback onTap;
+  const TimetableCard({Key? key, required this.onTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -333,10 +433,8 @@ class TimetableCard extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => TimetablePage()),
-            );
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => TimetablePage()));
           },
           child: Container(
             width: double.infinity,
@@ -344,6 +442,14 @@ class TimetableCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(0, 3), // changes position of shadow
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -371,7 +477,8 @@ class TimetableCard extends StatelessWidget {
 }
 
 class BusInfoCard extends StatelessWidget {
-  const BusInfoCard({Key? key}) : super(key: key);
+  final VoidCallback onTap;
+  const BusInfoCard({Key? key, required this.onTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -387,18 +494,21 @@ class BusInfoCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => BusChoosePage()),
-            );
-          },
+          onTap: onTap,
           child: Container(
             width: double.infinity,
             height: 150,
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(0, 3), // changes position of shadow
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

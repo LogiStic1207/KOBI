@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Widget/bezierContainer.dart';
-import 'chatbotpage.dart';
 import 'dashboard.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -46,7 +45,9 @@ class _LoginPageState extends State<Login> {
       if (_keepLoggedIn && _loginCount > 0) {
         _pwController.text = prefs.getString('savedPassword') ?? '';
         if (_idController.text == _lastLoggedInId) {
-          Future.delayed(Duration(seconds: 2)); //2초 의도적 딜레이 OpenGL ES 상태 불일치: OpenGL ES 상태가 예상과 일치하지 않을 때 발생할 수 있습니다.
+          Future.delayed(Duration(
+              seconds:
+                  2)); //2초 의도적 딜레이 OpenGL ES 상태 불일치: OpenGL ES 상태가 예상과 일치하지 않을 때 발생할 수 있습니다.
           _sendInfotoServer(); // 자동 로그인 시도
         }
       }
@@ -102,7 +103,7 @@ class _LoginPageState extends State<Login> {
   }
 
   Future<http.Response> _makeLoginRequest() {
-    var url = 'http://192.168.219.101:5000/login';
+    var url = 'http://192.168.0.13:5000/login';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -153,7 +154,6 @@ class _LoginPageState extends State<Login> {
       ),
     );
   }
-
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

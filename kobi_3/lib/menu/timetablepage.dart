@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import 'dart:convert';
 
 void main() => runApp(MyApp());
 
@@ -62,7 +64,19 @@ class _TimetablePageState extends State<TimetablePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('주간 시간표')),
+      appBar: AppBar(
+        title: Text('주간 시간표'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save),
+            onPressed: saveTimetable,
+          ),
+          IconButton(
+            icon: Icon(Icons.folder_open),
+            onPressed: loadTimetable,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // 시간표 부분을 화면의 80% 크기로 설정
@@ -83,7 +97,7 @@ class _TimetablePageState extends State<TimetablePage> {
             maxHeight: MediaQuery.of(context).size.height * 0.5,
             collapsed: Container(
               decoration: BoxDecoration(
-                color: Colors.blueGrey,
+                color: Color(0xff30619c),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24.0),
                   topRight: Radius.circular(24.0),
@@ -483,5 +497,163 @@ class _TimetablePageState extends State<TimetablePage> {
     setState(() {
       cartItems.removeWhere((item) => item['id'] == course['id']);
     });
+  }
+
+  void saveTimetable() async {
+    TextEditingController nameController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('시간표 저장'),
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(hintText: "시간표 이름을 입력하세요"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('저장'),
+              onPressed: () async {
+                if (nameController.text.isNotEmpty) {
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  List<Map<String, dynamic>> cartItemsToSave =
+                      cartItems.map((course) {
+                    return {
+                      'id': course['id'],
+                      'name': course['name'],
+                      'professor': course['professor'],
+                      'time': course['time'],
+                      'parsedTime': course['parsedTime'].map((day, time) {
+                        return MapEntry(
+                            day,
+                            time
+                                .map((range) =>
+                                    {'start': range.start, 'end': range.end})
+                                .toList());
+                      }),
+                      'color': course['color'].value
+                    };
+                  }).toList();
+
+                  List<String> cartItemsJson = cartItemsToSave
+                      .map((course) => jsonEncode(course))
+                      .toList();
+                  await prefs.setStringList(
+                      "timetable_${nameController.text}", cartItemsJson);
+
+                  if (mounted) {
+                    Navigator.of(context).pop(); // 창 닫기
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('시간표가 저장되었습니다.')),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void loadTimetable() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    Set<String> keys = prefs.getKeys();
+    List<String> timetableNames =
+        keys.where((key) => key.startsWith("timetable_")).toList();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text('시간표 불러오기'),
+              content: Container(
+                width: double.maxFinite,
+                height: 300,
+                child: ListView.builder(
+                  itemCount: timetableNames.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    String timetableName = timetableNames[index]
+                        .substring(10); // "timetable_" 부분 제거
+                    return ListTile(
+                      title: Text(timetableName),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          await prefs.remove(timetableNames[index]);
+                          setState(() {
+                            timetableNames.removeAt(index);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('$timetableName 시간표가 삭제되었습니다.')),
+                          );
+                        },
+                      ),
+                      onTap: () async {
+                        List<String>? cartItemsJson =
+                            prefs.getStringList(timetableNames[index]);
+                        if (cartItemsJson != null) {
+                          setState(() {
+                            cartItems = cartItemsJson
+                                .map((courseJson) {
+                                  Map<String, dynamic> course =
+                                      jsonDecode(courseJson);
+                                  course['parsedTime'] = (course['parsedTime']
+                                          as Map<String, dynamic>)
+                                      .map((day, times) {
+                                    return MapEntry(
+                                        day,
+                                        (times as List<dynamic>).map((range) {
+                                          return RangeValues(
+                                            range['start']?.toDouble() ?? 0.0,
+                                            range['end']?.toDouble() ?? 0.0,
+                                          );
+                                        }).toList());
+                                  });
+                                  course['color'] = Color(course['color']);
+                                  return course;
+                                })
+                                .toList()
+                                .cast<Map<String, dynamic>>();
+                          });
+
+                          if (mounted) {
+                            Navigator.of(context).pop(); // 창 닫기
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('시간표가 로드되었습니다.')),
+                            );
+                          }
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('닫기'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

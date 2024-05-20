@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:kobi_3/menu/mypage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dashboard.dart';
@@ -58,7 +57,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       _controller.clear();
       _scrollToEnd();
       // Send user message to the server and wait for the response
-      var url = 'http://192.168.219.101:5000/query';
+      var url = 'http://192.168.0.13:5000/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'query': text}));
