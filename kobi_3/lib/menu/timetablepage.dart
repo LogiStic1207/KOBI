@@ -570,7 +570,6 @@ class _TimetablePageState extends State<TimetablePage> {
     Set<String> keys = prefs.getKeys();
     List<String> timetableNames =
         keys.where((key) => key.startsWith("timetable_")).toList();
-
     await showDialog(
       context: context,
       builder: (BuildContext context) {

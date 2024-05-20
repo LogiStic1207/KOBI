@@ -375,16 +375,16 @@ class ChatBotCard extends StatelessWidget {
             margin:
                 const EdgeInsets.only(top: 40), // Added margin to shift down
             width: double.infinity,
-            height: 150,
+            height: 200, // 챗봇 카드 높이 증가
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: Offset(0, 3), // changes position of shadow
+                  color: Colors.black.withOpacity(0.3), // 그림자 농도 증가
+                  spreadRadius: 3,
+                  blurRadius: 7,
+                  offset: Offset(0, 5), // 그림자 위치 조정
                 ),
               ],
             ),
@@ -394,14 +394,16 @@ class ChatBotCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
-                  child: Icon(Icons.add, color: Colors.white, size: 40),
+                  child: Icon(Icons.chat_bubble,
+                      color: Colors.white, size: 50), // 더 큰 아이콘
                 ),
                 SizedBox(height: 20),
                 Text(
                   '챗봇',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 18, // 텍스트 크기 증가
+                    fontWeight: FontWeight.bold, // 텍스트 굵게
                   ),
                 ),
                 SizedBox(height: 10),
@@ -456,7 +458,8 @@ class TimetableCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
-                  child: Icon(Icons.add, color: Colors.white, size: 40),
+                  child:
+                      Icon(Icons.calendar_today, color: Colors.white, size: 40),
                 ),
                 Spacer(),
                 Text(
@@ -494,7 +497,10 @@ class BusInfoCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: onTap,
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ChatBotPage()));
+          },
           child: Container(
             width: double.infinity,
             height: 150,
@@ -515,7 +521,8 @@ class BusInfoCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 55.0), // 원하는 값으로 조절
-                  child: Icon(Icons.add, color: Colors.white, size: 40),
+                  child:
+                      Icon(Icons.directions_bus, color: Colors.white, size: 40),
                 ),
                 Spacer(),
                 Text(
