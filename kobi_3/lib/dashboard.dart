@@ -7,6 +7,7 @@ import 'menu/options.dart';
 import 'chatbotpage.dart';
 import 'style/styles.dart';
 import 'package:kobi_3/login.dart';
+import ''
 
 void main() {
   runApp(const MyApp());
@@ -516,7 +517,7 @@ class BusInfoCard extends StatelessWidget {
         GestureDetector(
           onTap: () {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => ChatBotPage()));
+                MaterialPageRoute(builder: (context) => BusChoosePage()));
           },
           child: Container(
             width: double.infinity,
