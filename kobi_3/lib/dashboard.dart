@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kobi_3/menu/shuttlecitychoose.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
 import 'menu/inquiry_page.dart';
@@ -494,7 +495,10 @@ class BusInfoCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: onTap,
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => BusChoosePage()));
+          },
           child: Container(
             width: double.infinity,
             height: 150,
