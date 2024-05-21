@@ -380,7 +380,7 @@ class ChatBotCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          left: 0,
+          left: 30,
           top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '새 채팅창을 만드세요. 코비가 원하는것을 알려드려요',
@@ -450,7 +450,7 @@ class TimetableCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          left: 0,
+          left: 10,
           top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '새 시간표를 생성해보세요',
@@ -515,7 +515,7 @@ class BusInfoCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          left: 0,
+          left: 10,
           top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '버스 시간표를 확인하세요',
