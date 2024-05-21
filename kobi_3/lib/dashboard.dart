@@ -458,7 +458,10 @@ class TimetableCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: onTap,
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => TimetablePage()));
+          },
           child: Container(
             width: double.infinity,
             height: 150,
@@ -520,7 +523,10 @@ class BusInfoCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: onTap,
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => BusChoosePage()));
+          },
           child: Container(
             width: double.infinity,
             height: 150,
