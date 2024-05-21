@@ -17,12 +17,25 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _messages.add(
         {"text": "안녕하세요. 여러분만의 코리아텍 비서, 코비입니다.\n무엇을 도와드릴까요?", "isBot": true});
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _scrollToEnd();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   double buttonWidth = 250.0;
@@ -36,6 +49,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           }
         }
   """;
+
   void _scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -179,6 +193,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true, // 키보드가 올라올 때 화면을 조정하도록 설정
       appBar: AppBar(
         title: Text("KOBI : 챗봇"),
         leading: IconButton(
@@ -189,55 +204,60 @@ class _ChatBotPageState extends State<ChatBotPage> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Center(
-            child: Image.asset(
-              "assets/logo.png",
-              width: 300,
-              height: 300,
-              color: Colors.white.withOpacity(0.2),
-              colorBlendMode: BlendMode.modulate,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            Center(
+              child: Image.asset(
+                "assets/logo.png",
+                width: 300,
+                height: 300,
+                color: Colors.white.withOpacity(0.2),
+                colorBlendMode: BlendMode.modulate,
+              ),
             ),
-          ),
-          Container(
-            height: MediaQuery.of(context).size.height - 136,
-            child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  return _buildMessageBubble(_messages[index]);
-                }),
-          ),
-          Positioned(
-            bottom: 500,
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              child: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: 'KO',
-                  style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xffe46b10).withOpacity(0.2)),
-                  children: [
-                    TextSpan(
-                        text: ' : ',
-                        style: TextStyle(
-                            color: Colors.black.withOpacity(0.2),
-                            fontSize: 30)),
-                    TextSpan(
-                        text: 'BI',
-                        style: TextStyle(
-                            color: Color(0xff0e5289).withOpacity(0.2),
-                            fontSize: 30)),
-                  ],
+            Container(
+              height: MediaQuery.of(context).size.height - 136,
+              child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    return _buildMessageBubble(_messages[index]);
+                  }),
+            ),
+            Positioned(
+              bottom: 500,
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: 'KO',
+                    style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xffe46b10).withOpacity(0.2)),
+                    children: [
+                      TextSpan(
+                          text: ' : ',
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.2),
+                              fontSize: 30)),
+                      TextSpan(
+                          text: 'BI',
+                          style: TextStyle(
+                              color: Color(0xff0e5289).withOpacity(0.2),
+                              fontSize: 30)),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomSheet: _buildBottomSheet(),
     );
@@ -268,17 +288,25 @@ class _ChatBotPageState extends State<ChatBotPage> {
               ),
               child: TextField(
                 controller: _controller,
+                focusNode: _focusNode,
                 decoration: InputDecoration(
                   hintText: "메시지를 입력하세요...",
                   border: InputBorder.none,
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
+                onEditingComplete: () {
+                  _sendMessage();
+                  _scrollToEnd();
+                },
               ),
             ),
           ),
           IconButton(
-              onPressed: _sendMessage,
+              onPressed: () {
+                _sendMessage();
+                _scrollToEnd();
+              },
               icon: Icon(Icons.send, color: Colors.blue)),
         ],
       ),

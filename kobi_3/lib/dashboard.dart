@@ -75,16 +75,24 @@ class _DashboardPageState extends State<DashboardPage> {
 
   List<Widget> _getFilteredCards() {
     List<Widget> cards = [];
-    double speechBubbleTop =
-        selectedTab == 'Favourite' ? 60 : 2; // Favourite일 때 speechBubble 위치 조정
+    double speechBubbleTop = selectedTab == 'Favourite' ? 60 : 2;
     if (selectedTab == 'All' || selectedTab == 'Recommended') {
       cards.add(ChatBotCard(
           onTap: () => _incrementCount('ChatBot'),
           speechBubbleTop: speechBubbleTop));
-      cards.add(const SizedBox(height: 60));
-      cards.add(TimetableCard(onTap: () => _incrementCount('Timetable')));
-      cards.add(const SizedBox(height: 60));
-      cards.add(BusInfoCard(onTap: () => _incrementCount('BusInfo')));
+      cards.add(const SizedBox(height: 55));
+      cards.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: TimetableCard(onTap: () => _incrementCount('Timetable')),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: BusInfoCard(onTap: () => _incrementCount('BusInfo')),
+          ),
+        ],
+      ));
     }
     if (selectedTab == 'Favourite') {
       if (chatBotCount >= timetableCount && chatBotCount >= busInfoCount) {
@@ -157,7 +165,7 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           children: [
             Container(
-              height: 65, // 여기서 높이를 원하는 값으로 설정
+              height: 65,
               decoration: BoxDecoration(
                 color: Color(0xff30619c),
               ),
@@ -388,7 +396,7 @@ class ChatBotCard extends StatelessWidget {
             margin:
                 const EdgeInsets.only(top: 40), // Added margin to shift down
             width: double.infinity,
-            height: 200, // 챗봇 카드 높이 증가
+            height: 300, // 챗봇 카드 높이 증가
             decoration: BoxDecoration(
               color: Color(0xff30619c),
               borderRadius: BorderRadius.circular(20),
@@ -450,10 +458,7 @@ class TimetableCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => TimetablePage()));
-          },
+          onTap: onTap,
           child: Container(
             width: double.infinity,
             height: 150,
@@ -515,10 +520,7 @@ class BusInfoCard extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => BusChoosePage()));
-          },
+          onTap: onTap,
           child: Container(
             width: double.infinity,
             height: 150,
