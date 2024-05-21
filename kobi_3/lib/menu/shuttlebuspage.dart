@@ -27,14 +27,14 @@ class _ShuttlebusPageState extends State<ShuttlebusPage> {
       '대전 일요일 등교 1': [],
       '대전 일요일 등교 2': [],
       '대전 금요일 하교 1': [],
-      '대전 금요일 하교 2': []
+      '대전 금요일 하교 2': [],
     },
     '주말 노선': {
       '천안셔틀 (토/일)': [],
       '일학습병행대학(토/시내)': [],
       '일학습병행대학(토/천안아산역)': [],
       '전문대학원 (토)': [],
-      '대학원 (토)': []
+      '대학원 (토)': [],
     },
   };
 
@@ -43,10 +43,9 @@ class _ShuttlebusPageState extends State<ShuttlebusPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double deviceWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        title: Text('셔틀버스 시간표'),
+        title: const Text('셔틀버스 시간표'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -54,52 +53,28 @@ class _ShuttlebusPageState extends State<ShuttlebusPage> {
           children: [
             Row(
               children: [
-                Flexible(
-                  child: SizedBox(
-                    width: deviceWidth / 2,
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: Text('노선을 선택하세요'),
-                      value: selectedBus,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedBus = value;
-                          selectedDirection = null;
-                        });
-                      },
-                      items: busSchedules.keys.map((String bus) {
-                        return DropdownMenuItem<String>(
-                          value: bus,
-                          child: Text(bus),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                _buildDropdownButton(
+                  hint: '노선을 선택하세요',
+                  value: selectedBus,
+                  items: busSchedules.keys.toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedBus = value;
+                      selectedDirection = null;
+                    });
+                  },
                 ),
-                if (selectedBus != null) ...[
-                  Flexible(
-                    child: SizedBox(
-                      width: deviceWidth / 2,
-                      child: DropdownButton<String>(
-                          isExpanded: true,
-                          hint: Text('지역을 선택하세요'),
-                          value: selectedDirection,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedDirection = value;
-                            });
-                          },
-                          items: busSchedules[selectedBus]!
-                              .keys
-                              .map((String direction) {
-                            return DropdownMenuItem<String>(
-                              value: direction,
-                              child: Text(direction),
-                            );
-                          }).toList()),
-                    ),
+                if (selectedBus != null)
+                  _buildDropdownButton(
+                    hint: '지역을 선택하세요',
+                    value: selectedDirection,
+                    items: busSchedules[selectedBus]!.keys.toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDirection = value;
+                      });
+                    },
                   ),
-                ],
               ],
             ),
             if (selectedDirection != null)
@@ -110,198 +85,154 @@ class _ShuttlebusPageState extends State<ShuttlebusPage> {
     );
   }
 
+  Widget _buildDropdownButton({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Flexible(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width / 2,
+        child: DropdownButton<String>(
+          isExpanded: true,
+          hint: Text(hint),
+          value: value,
+          onChanged: onChanged,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   Widget _buildScheduleTable(String direction) {
-    switch (direction) {
-      case '천안 셔틀':
-        return _buildCustomTable1();
-      case '청주 셔틀':
-        return _buildCustomTable2();
-      case '천안역':
-        return _buildCustomTable3();
-      case '터미널':
-        return _buildCustomTable4();
-      case '두정역':
-        return _buildCustomTable5();
-      case '아산/KTX':
-        return _buildCustomTable6();
-      case '용암동':
-        return _buildCustomTable7();
-      case '동남지구':
-        return _buildCustomTable8();
-      case '산남/분평':
-        return _buildCustomTable9();
-      case '세종':
-        return _buildCustomTable10();
-      case '서울(교대역)':
-        return _buildCustomTable11();
-      case '서울 월요일 등교 추가 (교대역)':
-        return _buildCustomTable12();
-      case '서울 월요일 등교 추가 (동천역)':
-        return _buildCustomTable13();
-      case '서울 금요일 하교 추가 1':
-        return _buildCustomTable14();
-      case '서울 금요일 하교 추가 2':
-        return _buildCustomTable15();
-      case '대전 일요일 등교 1':
-        return _buildCustomTable16();
-      case '대전 일요일 등교 2':
-        return _buildCustomTable17();
-      case '대전 금요일 하교 1':
-        return _buildCustomTable18();
-      case '대전 금요일 하교 2':
-        return _buildCustomTable19();
-      case '천안셔틀 (토/일)':
-        return _buildCustomTable20();
-      case '일학습병행대학(토/시내)':
-        return _buildCustomTable21();
-      case '일학습병행대학(토/천안아산역)':
-        return _buildCustomTable22();
-      case '전문대학원 (토)':
-        return _buildCustomTable23();
-      case '대학원 (토)':
-        return _buildCustomTable24();
-      default:
-        return _buildDefaultTable();
-    }
+    final tableBuilders = {
+      '천안 셔틀': _buildCustomTable1,
+      '청주 셔틀': _buildCustomTable2,
+      '천안역': _buildCustomTable3,
+      '터미널': _buildCustomTable4,
+      '두정역': _buildCustomTable5,
+      '아산/KTX': _buildCustomTable6,
+      '용암동': _buildCustomTable7,
+      '동남지구': _buildCustomTable8,
+      '산남/분평': _buildCustomTable9,
+      '세종': _buildCustomTable10,
+      '서울(교대역)': _buildCustomTable11,
+      '서울 월요일 등교 추가 (교대역)': _buildCustomTable12,
+      '서울 월요일 등교 추가 (동천역)': _buildCustomTable13,
+      '서울 금요일 하교 추가 1': _buildCustomTable14,
+      '서울 금요일 하교 추가 2': _buildCustomTable15,
+      '대전 일요일 등교 1': _buildCustomTable16,
+      '대전 일요일 등교 2': _buildCustomTable17,
+      '대전 금요일 하교 1': _buildCustomTable18,
+      '대전 금요일 하교 2': _buildCustomTable19,
+      '천안셔틀 (토/일)': _buildCustomTable20,
+      '일학습병행대학(토/시내)': _buildCustomTable21,
+      '일학습병행대학(토/천안아산역)': _buildCustomTable22,
+      '전문대학원 (토)': _buildCustomTable23,
+      '대학원 (토)': _buildCustomTable24,
+    };
+    return tableBuilders[direction]!();
   }
 
   Widget _buildDefaultTable() {
-    return Text('test');
+    return const Text('test');
   }
 
   Widget _buildCustomTable1() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '3회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '4회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '5회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '6회',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '목·금 추가',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('11:10'))),
-                DataCell(Center(child: Text('13:10'))),
-                DataCell(Center(child: Text('14:10'))),
-                DataCell(Center(child: Text('16:10'))),
-                DataCell(Center(child: Text('20:00'))),
-                DataCell(Center(child: Text('21:00'))),
-                DataCell(Center(child: Text('14:10/16:30'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('2캠퍼스'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('14:35'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널'))),
-                DataCell(Center(child: Text('11:35'))),
-                DataCell(Center(child: Text('13:35'))),
-                DataCell(Center(child: Text('14:42'))),
-                DataCell(Center(child: Text('16:35'))),
-                DataCell(Center(child: Text('20:25'))),
-                DataCell(Center(child: Text('21:25'))),
-                DataCell(Center(child: Text('14:35/16:55'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역'))),
-                DataCell(Center(child: Text('11:40'))),
-                DataCell(Center(child: Text('13:40'))),
-                DataCell(Center(child: Text('14:47'))),
-                DataCell(Center(child: Text('16:40'))),
-                DataCell(Center(child: Text('20:30'))),
-                DataCell(Center(child: Text('21:30'))),
-                DataCell(Center(child: Text('14:40/17:00'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('12:10'))),
-                DataCell(Center(child: Text('14:10'))),
-                DataCell(Center(child: Text('15:15'))),
-                DataCell(Center(child: Text('17:10'))),
-                DataCell(Center(child: Text('21:00'))),
-                DataCell(Center(child: Text('22:00'))),
-                DataCell(Center(child: Text('15:10/17:30'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회', '2회', '3회', '4회', '5회', '6회', '목·금 추가'],
+      rows: [
+        [
+          '본교',
+          '11:10',
+          '13:10',
+          '14:10',
+          '16:10',
+          '20:00',
+          '21:00',
+          '14:10/16:30'
+        ],
+        ['2캠퍼스', '', '', '14:35', '', '', '', ''],
+        [
+          '천안터미널',
+          '11:35',
+          '13:35',
+          '14:42',
+          '16:35',
+          '20:25',
+          '21:25',
+          '14:35/16:55'
+        ],
+        [
+          '천안역',
+          '11:40',
+          '13:40',
+          '14:47',
+          '16:40',
+          '20:30',
+          '21:30',
+          '14:40/17:00'
+        ],
+        [
+          '본교',
+          '12:10',
+          '14:10',
+          '15:15',
+          '17:10',
+          '21:00',
+          '22:00',
+          '15:10/17:30'
+        ],
+      ],
     );
   }
 
   Widget _buildCustomTable2() {
+    return _buildDataTable(
+      columns: [
+        '승하차장명\n(방향)',
+        '1회\n(본교)',
+        '2회\n(청주역->본교)',
+        '3회\n(오창과학단지)',
+        '4회\n(청주역->본교)',
+        '목·금 추가\n(오창과학단지)'
+      ],
+      rows: [
+        ['본교', '역방향 순서 ↑', '13:30', '15:40', '20:00', '22:10'],
+        ['옥산(가락 3리)', '12:12', '13:57', '', '20:25', ''],
+        ['청주역\n(서촌동BS/청주역BS)', '12:10', '14:07', '', '20:32', ''],
+        ['지웰시티', '', '14:12', '', '20:39', ''],
+        ['솔밭공원', '12:05', '14:17', '', '20:41', ''],
+        ['HS포래\n(봉명우체국 BS)', '12:02', '14:21', '', '20:45', ''],
+        ['오창과학단지', '', '', '하차', '', '하차'],
+        ['성모병원', '', '', '하차', '', '하차'],
+        ['신봉사거리\n(LPG 충전소)', '', '', '하차', '', '하차'],
+        ['봉명사거리', '', '', '하차', '', '하차'],
+        ['사창사거리\n(고용센터/하이마트)', '12:00', '14:25', '하차', '20:48', '하차'],
+        ['체육관\n(네파/맞은편)', '11:58', '14:30', '하차', '20:50', '하차'],
+        ['상당공원 C\n(지하상가 BS)', '', '14:33', '하차', '20:53', '하차'],
+        ['상당공원 B\n(안경매니져 성안점)', '11:56', '', '', '', ''],
+        ['석교동 육거리', '11:54', '14:36', '하차', '20:56', '하차'],
+        ['삼영가스', '', '14:39', '하차', '21:00', '하차'],
+        ['용암동 현대', '11:51', '14:45', '하차', '21:02', '하차'],
+        ['방서동\n(다이소)', '11:50', '', '종점', '', '종점'],
+        ['상당공원 A\n(상공회의소)', '', '15:00', '', '21:15', ''],
+        ['문화산업단지', '', '15:05', '', '21:20', ''],
+        ['성모병원\n(율량 맥도날드)', '', '15:12', '', '21:25', ''],
+        ['과학단지\n(오창프라자)', '', '15:23', '', '21:35', ''],
+        ['본교', '12:50', '15:50', '', '21:50', ''],
+      ],
+    );
+  }
+
+  Widget _buildDataTable(
+      {required List<String> columns, required List<List<String>> rows}) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
@@ -309,1581 +240,357 @@ class _ShuttlebusPageState extends State<ShuttlebusPage> {
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: DataTable(
-            columnSpacing: 20.0,
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명\n(방향)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회\n(본교)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회\n(청주역->본교)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '3회\n(오창과학단지)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '4회\n(청주역->본교)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '목·금 추가\n(오창과학단지)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('역방향 순서 ↑'))),
-                DataCell(Center(child: Text('13:30'))),
-                DataCell(Center(child: Text('15:40'))),
-                DataCell(Center(child: Text('20:00'))),
-                DataCell(Center(child: Text('22:10'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('옥산(가락 3리)'))),
-                DataCell(Center(child: Text('12:12'))),
-                DataCell(Center(child: Text('13:57'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('20:25'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('청주역\n(서촌동BS/청주역BS)'))),
-                DataCell(Center(child: Text('12:10'))),
-                DataCell(Center(child: Text('14:07'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('20:32'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('지웰시티'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('14:12'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('20:39'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('솔밭공원'))),
-                DataCell(Center(child: Text('12:05'))),
-                DataCell(Center(child: Text('14:17'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('20:41'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('HS포래\n(봉명우체국 BS)'))),
-                DataCell(Center(child: Text('12:02'))),
-                DataCell(Center(child: Text('14:21'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('20:45'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('오창과학단지'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('성모병원'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('신봉사거리\n(LPG 충전소)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('봉명사거리'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('사창사거리\n(고용센터/하이마트)'))),
-                DataCell(Center(child: Text('12:00'))),
-                DataCell(Center(child: Text('14:25'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('20:48'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('체육관\n(네파/맞은편)'))),
-                DataCell(Center(child: Text('11:58'))),
-                DataCell(Center(child: Text('14:30'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('20:50'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('상당공원 C\n(지하상가 BS)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('14:33'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('20:53'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('상당공원 B\n(안경매니져 성안점)'))),
-                DataCell(Center(child: Text('11:56'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('석교동 육거리'))),
-                DataCell(Center(child: Text('11:54'))),
-                DataCell(Center(child: Text('14:36'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('20:56'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('삼영가스'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('14:39'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('21:00'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('용암동 현대'))),
-                DataCell(Center(child: Text('11:51'))),
-                DataCell(Center(child: Text('14:45'))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('21:02'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('방서동\n(다이소)'))),
-                DataCell(Center(child: Text('11:50'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('종점'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('종점'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('상당공원 A\n(상공회의소)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('15:00'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('21:15'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('문화산업단지'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('15:05'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('21:20'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('성모병원\n(율량 맥도날드)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('15:12'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('21:25'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('과학단지\n(오창프라자)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('15:23'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('21:35'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('12:50'))),
-                DataCell(Center(child: Text('15:50'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('21:50'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-            ],
+            columns: columns
+                .map((col) => DataColumn(
+                      label: Center(
+                        child: Text(
+                          col,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ))
+                .toList(),
+            rows: rows
+                .map((row) => DataRow(
+                      cells: row
+                          .map((cell) => DataCell(
+                                Center(child: Text(cell)),
+                              ))
+                          .toList(),
+                    ))
+                .toList(),
           ),
         ),
       ),
     );
   }
 
+  // Repeat the same pattern for other _buildCustomTableN methods
+
   Widget _buildCustomTable3() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:10'),)),
-              DataCell(Center(child: Text('천안역 (학화호두과자 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:18'),)),
-              DataCell(Center(child: Text('한양 수자인BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:21'),)),
-              DataCell(Center(child: Text('청당동 (벽산블루밍)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:26'),)),
-              DataCell(Center(child: Text('부영@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('동우@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('신계초'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('운전리'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('연춘리'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('중앙@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['08:10', '천안역 (학화호두과자 앞)'],
+        ['08:18', '한양 수자인BS'],
+        ['08:21', '청당동 (벽산블루밍)'],
+        ['08:26', '부영@'],
+        ['승하차', '동우@'],
+        ['승하차', '신계초'],
+        ['승하차', '운전리'],
+        ['승하차', '연춘리'],
+        ['승하차', '중앙@'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable4() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:40'),)),
-              DataCell(Center(child: Text('동일하이빌@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:43'),)),
-              DataCell(Center(child: Text('주공11단지@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:05'),)),
-              DataCell(Center(child: Text('천안 터미널(신세계앞 횡단보도)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:11'),)),
-              DataCell(Center(child: Text('제일고 맞은편(구 교육청)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:13'),)),
-              DataCell(Center(child: Text('원성동(GS슈퍼)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:14'),)),
-              DataCell(Center(child: Text('삼룡교(유니클로, 구 한방병원)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:15'),)),
-              DataCell(Center(child: Text('바로약국 앞'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('중앙@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:40', '동일하이빌@'],
+        ['07:43', '주공11단지@'],
+        ['08:05', '천안 터미널(신세계앞 횡단보도)'],
+        ['08:11', '제일고 맞은편(구 교육청)'],
+        ['08:13', '원성동(GS슈퍼)'],
+        ['08:14', '삼룡교(유니클로, 구 한방병원)'],
+        ['08:15', '바로약국 앞'],
+        ['승하차', '중앙@'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable5() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:41'),)),
-              DataCell(Center(child: Text('두정역'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:45'),)),
-              DataCell(Center(child: Text('노동부 (천안지방사무소)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:46'),)),
-              DataCell(Center(child: Text('늘푸른@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:48'),)),
-              DataCell(Center(child: Text('성정지하도(6단지)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:49'),)),
-              DataCell(Center(child: Text('전자랜드'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:50'),)),
-              DataCell(Center(child: Text('광혜당약국'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:53'),)),
-              DataCell(Center(child: Text('충무병원'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:55'),)),
-              DataCell(Center(child: Text('세종아트빌라BS(구 일봉회관)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:56'),)),
-              DataCell(Center(child: Text('남부오거리(귀뚜라미 보일러)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:58'),)),
-              DataCell(Center(child: Text('삼룡교(유니클로, 구 한방병원)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:00'),)),
-              DataCell(Center(child: Text('바로약국 앞'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('동우@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('신계초'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('운전리'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('연춘리'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('승하차'),)),
-              DataCell(Center(child: Text('중앙@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:41', '두정역'],
+        ['07:45', '노동부 (천안지방사무소)'],
+        ['07:46', '늘푸른@'],
+        ['07:48', '성정지하도(6단지)'],
+        ['07:49', '전자랜드'],
+        ['07:50', '광혜당약국'],
+        ['07:53', '충무병원'],
+        ['07:55', '세종아트빌라BS(구 일봉회관)'],
+        ['07:56', '남부오거리(귀뚜라미 보일러)'],
+        ['07:58', '삼룡교(유니클로, 구 한방병원)'],
+        ['08:00', '바로약국 앞'],
+        ['승하차', '동우@'],
+        ['승하차', '신계초'],
+        ['승하차', '운전리'],
+        ['승하차', '연춘리'],
+        ['승하차', '중앙@'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable6() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:20'),)),
-              DataCell(Center(child: Text('온양온천역1번출구BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:25'),)),
-              DataCell(Center(child: Text('이마트 아산점'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:35'),)),
-              DataCell(Center(child: Text('배방읍행정복지센터BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:45'),)),
-              DataCell(Center(child: Text('호서웨딩홀BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:52'),)),
-              DataCell(Center(child: Text('천안아산KTX(3번출구 6번 승강장)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:55'),)),
-              DataCell(Center(child: Text('Y-CITY(상공회의소건너편횡단보도)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:57'),)),
-              DataCell(Center(child: Text('한화 꿈에그린@ BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:01'),)),
-              DataCell(Center(child: Text('용암마을(하나은행건너편 용암지하도입구)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:05'),)),
-              DataCell(Center(child: Text('신방동 리차드'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:08'),)),
-              DataCell(Center(child: Text('신방동 GS주유소'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:18'),)),
-              DataCell(Center(child: Text('청당동(벽산블루밍)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:20', '온양온천역1번출구BS'],
+        ['07:25', '이마트 아산점'],
+        ['07:35', '배방읍행정복지센터BS'],
+        ['07:45', '호서웨딩홀BS'],
+        ['07:52', '천안아산KTX(3번출구 6번 승강장)'],
+        ['07:55', 'Y-CITY(상공회의소건너편횡단보도)'],
+        ['07:57', '한화 꿈에그린@ BS'],
+        ['08:01', '용암마을(하나은행건너편 용암지하도입구)'],
+        ['08:05', '신방동 리차드'],
+        ['08:08', '신방동 GS주유소'],
+        ['08:18', '청당동(벽산블루밍)'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable7() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:28'),)),
-              DataCell(Center(child: Text('방서동(다이소)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:30'),)),
-              DataCell(Center(child: Text('용암동현대@'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:31'),)),
-              DataCell(Center(child: Text('GS대청주유소 맞은편(용암동)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:33'),)),
-              DataCell(Center(child: Text('석교동 육거리'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:36'),)),
-              DataCell(Center(child: Text('상당공원A(상공회의소)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:40'),)),
-              DataCell(Center(child: Text('문화 산업단지(구 제조창)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:45'),)),
-              DataCell(Center(child: Text('성모병원(율량 맥도널드)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:00'),)),
-              DataCell(Center(child: Text('과학단지(오창프라자)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:28', '방서동(다이소)'],
+        ['07:30', '용암동현대@'],
+        ['07:31', 'GS대청주유소 맞은편(용암동)'],
+        ['07:33', '석교동 육거리'],
+        ['07:36', '상당공원A(상공회의소)'],
+        ['07:40', '문화 산업단지(구 제조창)'],
+        ['07:45', '성모병원(율량 맥도널드)'],
+        ['08:00', '과학단지(오창프라자)'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable8() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:20'),)),
-              DataCell(Center(child: Text('동남지구(대원칸타빌 BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:22'),)),
-              DataCell(Center(child: Text('프라우 삼성산부인과'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:24'),)),
-              DataCell(Center(child: Text('청주혜원학교'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:25'),)),
-              DataCell(Center(child: Text('금천광장(농협앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:28'),)),
-              DataCell(Center(child: Text('용담동베이징(초양교회 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:37'),)),
-              DataCell(Center(child: Text('상당공원B(안경매니저 성안점 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:40'),)),
-              DataCell(Center(child: Text('체육관(NEPA)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:42'),)),
-              DataCell(Center(child: Text('사창사거리(청주고용센터맞은편BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:46'),)),
-              DataCell(Center(child: Text('갤러리호텔(봉명우체국BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:50'),)),
-              DataCell(Center(child: Text('솔밭공원'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:20', '동남지구(대원칸타빌 BS)'],
+        ['07:22', '프라우 삼성산부인과'],
+        ['07:24', '청주혜원학교'],
+        ['07:25', '금천광장(농협앞)'],
+        ['07:28', '용담동베이징(초양교회 앞)'],
+        ['07:37', '상당공원B(안경매니저 성안점 앞)'],
+        ['07:40', '체육관(NEPA)'],
+        ['07:42', '사창사거리(청주고용센터맞은편BS)'],
+        ['07:46', '갤러리호텔(봉명우체국BS)'],
+        ['07:50', '솔밭공원'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable9() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:15'),)),
-              DataCell(Center(child: Text('분평동 전자랜드'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:17'),)),
-              DataCell(Center(child: Text('남성초등학교'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:20'),)),
-              DataCell(Center(child: Text('산남동수곡교회'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:22'),)),
-              DataCell(Center(child: Text('충북 원예농협(GS마트)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:26'),)),
-              DataCell(Center(child: Text('충북대병원BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:27'),)),
-              DataCell(Center(child: Text('KBS맞은편'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:31'),)),
-              DataCell(Center(child: Text('개신동 푸르지오@ BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:32'),)),
-              DataCell(Center(child: Text('삼일아파트BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:37'),)),
-              DataCell(Center(child: Text('시외버스TM건너(롯데마트 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:42'),)),
-              DataCell(Center(child: Text('흥덕고교 BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:46'),)),
-              DataCell(Center(child: Text('청주역A(서촌동 BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:49'),)),
-              DataCell(Center(child: Text('옥산(가락3리 BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:15', '분평동 전자랜드'],
+        ['07:17', '남성초등학교'],
+        ['07:20', '산남동수곡교회'],
+        ['07:22', '충북 원예농협(GS마트)'],
+        ['07:26', '충북대병원BS'],
+        ['07:27', 'KBS맞은편'],
+        ['07:31', '개신동 푸르지오@ BS'],
+        ['07:32', '삼일아파트BS'],
+        ['07:37', '시외버스TM건너(롯데마트 앞)'],
+        ['07:42', '흥덕고교 BS'],
+        ['07:46', '청주역A(서촌동 BS)'],
+        ['07:49', '옥산(가락3리 BS)'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable10() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:20'),)),
-              DataCell(Center(child: Text('9단지중흥S클래스(달콤제작소 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:25'),)),
-              DataCell(Center(child: Text('세종시청(자율주행서비스정류장)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:28'),)),
-              DataCell(Center(child: Text('세종 순복음더사랑교회'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:34'),)),
-              DataCell(Center(child: Text('소방청'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:36'),)),
-              DataCell(Center(child: Text('LG전자 세종본점'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:41'),)),
-              DataCell(Center(child: Text('정부세종청사정류장(남측)BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:43'),)),
-              DataCell(Center(child: Text('도담풍경채도서관(도담마을6,9단지 BS)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:52'),)),
-              DataCell(Center(child: Text('범지기마을10단지 BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:37'),)),
-              DataCell(Center(child: Text('시외버스TM건너(롯데마트 앞)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:05'),)),
-              DataCell(Center(child: Text('조치원 자이아파트BS(노브랜드)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:10'),)),
-              DataCell(Center(child: Text('신봉초등학교BS'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:20', '9단지중흥S클래스(달콤제작소 앞)'],
+        ['07:25', '세종시청(자율주행서비스정류장)'],
+        ['07:28', '세종 순복음더사랑교회'],
+        ['07:34', '소방청'],
+        ['07:36', 'LG전자 세종본점'],
+        ['07:41', '정부세종청사정류장(남측)BS'],
+        ['07:43', '도담풍경채도서관(도담마을6,9단지 BS)'],
+        ['07:52', '범지기마을10단지 BS'],
+        ['07:37', '시외버스TM건너(롯데마트 앞)'],
+        ['08:05', '조치원 자이아파트BS(노브랜드)'],
+        ['08:10', '신봉초등학교BS'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable11() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:20'),)),
-              DataCell(Center(child: Text('교대'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:37'),)),
-              DataCell(Center(child: Text('동천역 환승정류장(하교 시 미하차)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:40'),)),
-              DataCell(Center(child: Text('죽전간이정류장'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:50'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:20', '교대'],
+        ['07:37', '동천역 환승정류장(하교 시 미하차)'],
+        ['07:40', '죽전간이정류장'],
+        ['08:50', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable12() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:10'),)),
-              DataCell(Center(child: Text('3호선 교대역(14번 출구)'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:40'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:10', '3호선 교대역(14번 출구)'],
+        ['08:40', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable13() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:30'),)),
-              DataCell(Center(child: Text('동천역 환승정류장'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('07:33'),)),
-              DataCell(Center(child: Text('죽전 간이정류장'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('08:40'),)),
-              DataCell(Center(child: Text('대학(본교)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['07:30', '동천역 환승정류장'],
+        ['07:33', '죽전 간이정류장'],
+        ['08:40', '대학(본교)'],
+      ],
     );
   }
 
   Widget _buildCustomTable14() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('14:10'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('죽전 간이정류장'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('도착'),)),
-              DataCell(Center(child: Text('3호선 교대역(14번 출구)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['14:10', '대학'],
+        ['하차', '죽전 간이정류장'],
+        ['도착', '3호선 교대역(14번 출구)'],
+      ],
     );
   }
 
   Widget _buildCustomTable15() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('16:10'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('죽전 간이정류장'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('도착'),)),
-              DataCell(Center(child: Text('3호선 교대역(14번 출구)'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['16:10', '대학'],
+        ['하차', '죽전 간이정류장'],
+        ['도착', '3호선 교대역(14번 출구)'],
+      ],
     );
   }
 
   Widget _buildCustomTable16() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('18:10'),)),
-              DataCell(Center(child: Text('대전역'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('18:15'),)),
-              DataCell(Center(child: Text('터미널'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('도착'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['18:10', '대전역'],
+        ['18:15', '터미널'],
+        ['도착', '대학'],
+      ],
     );
   }
 
   Widget _buildCustomTable17() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('18:20'),)),
-              DataCell(Center(child: Text('대전역'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('18:25'),)),
-              DataCell(Center(child: Text('터미널'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('도착'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['18:20', '대전역'],
+        ['18:25', '터미널'],
+        ['도착', '대학'],
+      ],
     );
   }
 
   Widget _buildCustomTable18() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('14:00'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('터미널'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('대전역'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['14:00', '대학'],
+        ['하차', '터미널'],
+        ['하차', '대전역'],
+      ],
     );
   }
 
   Widget _buildCustomTable19() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Center(
-              child: Text('시간', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-            DataColumn(label: Center(
-              child: Text('장소', style: TextStyle(fontWeight: FontWeight.bold),),
-            )),
-          ],
-          rows: [
-            DataRow(cells: [
-              DataCell(Center(child: Text('18:20'),)),
-              DataCell(Center(child: Text('대학'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('터미널'),)),
-            ]),
-            DataRow(cells: [
-              DataCell(Center(child: Text('하차'),)),
-              DataCell(Center(child: Text('대전역'),)),
-            ]),
-          ],
-        ),
-      )
+    return _buildDataTable(
+      columns: ['시간', '장소'],
+      rows: [
+        ['18:20', '대학'],
+        ['하차', '터미널'],
+        ['하차', '대전역'],
+      ],
     );
   }
 
   Widget _buildCustomTable20() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 토요일',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회 토요일',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '3회 일요일',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '4회 일요일',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '5회 일요일',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('14:00'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('17:00'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널'))),
-                DataCell(Center(child: Text('14:25'))),
-                DataCell(Center(child: Text('18:30'))),
-                DataCell(Center(child: Text('17:25'))),
-                DataCell(Center(child: Text('21:15'))),
-                DataCell(Center(child: Text('21:30'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역'))),
-                DataCell(Center(child: Text('14:30'))),
-                DataCell(Center(child: Text('18:35'))),
-                DataCell(Center(child: Text('17:30'))),
-                DataCell(Center(child: Text('21:20'))),
-                DataCell(Center(child: Text('21:35'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('15:00'))),
-                DataCell(Center(child: Text('19:15'))),
-                DataCell(Center(child: Text('18:10'))),
-                DataCell(Center(child: Text('21:50'))),
-                DataCell(Center(child: Text('22:00'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회 토요일', '2회 토요일', '3회 일요일', '4회 일요일', '5회 일요일'],
+      rows: [
+        ['본교', '14:00', '', '17:00', '', ''],
+        ['천안터미널', '14:25', '18:30', '17:25', '21:15', '21:30'],
+        ['천안역', '14:30', '18:35', '17:30', '21:20', '21:35'],
+        ['본교', '15:00', '19:15', '18:10', '21:50', '22:00'],
+      ],
     );
   }
 
   Widget _buildCustomTable21() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '3회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '4회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '5회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정캠퍼스'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('08:05'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정역'))),
-                DataCell(Center(child: Text('08:00'))),
-                DataCell(Center(child: Text('08:10'))),
-                DataCell(Center(child: Text('10:10'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널(신세계 앞 횡단보도)'))),
-                DataCell(Center(child: Text('08:05'))),
-                DataCell(Center(child: Text('08:15'))),
-                DataCell(Center(child: Text('10:15'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 A(학화 호두과자 앞)'))),
-                DataCell(Center(child: Text('08:10'))),
-                DataCell(Center(child: Text('08:20'))),
-                DataCell(Center(child: Text('10:20'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('19:10'))),
-                DataCell(Center(child: Text('19:20'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 B(태극당 건너 BS)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('19:40'))),
-                DataCell(Center(child: Text('19:50'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('19:50'))),
-                DataCell(Center(child: Text('20:00'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정역'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('종점'))),
-                DataCell(Center(child: Text('종점'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회 등교', '2회 등교', '3회 등교', '4회 하교', '5회 하교'],
+      rows: [
+        ['두정캠퍼스', '', '08:05', '', '', ''],
+        ['두정역', '08:00', '08:10', '10:10', '', ''],
+        ['천안터미널(신세계 앞 횡단보도)', '08:05', '08:15', '10:15', '', ''],
+        ['천안역 A(학화 호두과자 앞)', '08:10', '08:20', '10:20', '', ''],
+        ['본교', '도착', '도착', '도착', '19:10', '19:20'],
+        ['천안역 B(태극당 건너 BS)', '', '', '', '19:40', '19:50'],
+        ['천안터미널', '', '', '', '19:50', '20:00'],
+        ['두정역', '', '', '', '종점', '종점'],
+      ],
     );
   }
 
   Widget _buildCustomTable22() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('대학(본교)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('19:20'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안아산역(3번출구 6번승강장)'))),
-                DataCell(Center(child: Text('08:15'))),
-                DataCell(Center(child: Text('도착'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('대학(본교)'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text(''))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회 등교', '1회 하교'],
+      rows: [
+        ['대학(본교)', '', '19:20'],
+        ['천안아산역(3번출구 6번승강장)', '08:15', '도착'],
+        ['대학(본교)', '도착', ''],
+      ],
     );
   }
 
   Widget _buildCustomTable23() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '4회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '5회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안아산 KTX(3번출구)'))),
-                DataCell(Center(child: Text('08:30'))),
-                DataCell(Center(child: Text('12:45'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 B(태극당 건너 BS)'))),
-                DataCell(Center(child: Text('08:45'))),
-                DataCell(Center(child: Text('13:00'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널(신세계 앞 횡단보도)'))),
-                DataCell(Center(child: Text('08:55'))),
-                DataCell(Center(child: Text('13:10'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정역'))),
-                DataCell(Center(child: Text('09:00'))),
-                DataCell(Center(child: Text('13:15'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정캠퍼스'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('16:40'))),
-                DataCell(Center(child: Text('19:35'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정역'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널(신세계 앞 횡단보도)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 A(학화 호두과자 앞)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안아산 KTX(3번출구)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('종점'))),
-                DataCell(Center(child: Text('종점'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회 등교', '2회 등교', '4회 하교', '5회 하교'],
+      rows: [
+        ['천안아산 KTX(3번출구)', '08:30', '12:45', '', ''],
+        ['천안역 B(태극당 건너 BS)', '08:45', '13:00', '', ''],
+        ['천안터미널(신세계 앞 횡단보도)', '08:55', '13:10', '', ''],
+        ['두정역', '09:00', '13:15', '', ''],
+        ['두정캠퍼스', '도착', '도착', '16:40', '19:35'],
+        ['두정역', '', '', '하차', '하차'],
+        ['천안터미널(신세계 앞 횡단보도)', '', '', '하차', '하차'],
+        ['천안역 A(학화 호두과자 앞)', '', '', '하차', '하차'],
+        ['천안아산 KTX(3번출구)', '', '', '종점', '종점'],
+      ],
     );
   }
 
   Widget _buildCustomTable24() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            columns: [
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '승하차장명',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '1회 등교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '2회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              DataColumn(
-                label: Center(
-                  child: Text(
-                    '3회 하교',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-            rows: [
-              DataRow(cells: [
-                DataCell(Center(child: Text('두정역'))),
-                DataCell(Center(child: Text('07:50'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널(신세계 앞 횡단보도)'))),
-                DataCell(Center(child: Text('08:00'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 A(학화 호두과자 앞)'))),
-                DataCell(Center(child: Text('08:05'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text(''))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('본교'))),
-                DataCell(Center(child: Text('도착'))),
-                DataCell(Center(child: Text('16:20'))),
-                DataCell(Center(child: Text('18:10'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역(태극당 건너 BS)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안역 A(학화 호두과자 앞)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('하차'))),
-                DataCell(Center(child: Text('하차'))),
-              ]),
-              DataRow(cells: [
-                DataCell(Center(child: Text('천안터미널(신세계 앞 횡단보도)'))),
-                DataCell(Center(child: Text(''))),
-                DataCell(Center(child: Text('종점'))),
-                DataCell(Center(child: Text('종점'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    return _buildDataTable(
+      columns: ['승하차장명', '1회 등교', '2회 하교', '3회 하교'],
+      rows: [
+        ['두정역', '07:50', '', ''],
+        ['천안터미널(신세계 앞 횡단보도)', '08:00', '', ''],
+        ['천안역 A(학화 호두과자 앞)', '08:05', '', ''],
+        ['본교', '도착', '16:20', '18:10'],
+        ['천안역(태극당 건너 BS)', '', '하차', '하차'],
+        ['천안역 A(학화 호두과자 앞)', '', '하차', '하차'],
+        ['천안터미널(신세계 앞 횡단보도)', '', '종점', '종점'],
+      ],
     );
   }
 }
