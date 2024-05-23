@@ -75,6 +75,10 @@ class _TimetablePageState extends State<TimetablePage> {
             icon: Icon(Icons.folder_open),
             onPressed: loadTimetable,
           ),
+          IconButton(
+            icon: Icon(Icons.recommend),
+            onPressed: showRecommendationDialog,
+          ),
         ],
       ),
       body: Column(
@@ -111,6 +115,41 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void showRecommendationDialog() {
+    TextEditingController creditController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('과목 추천'),
+          content: TextField(
+            controller: creditController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(hintText: "추천받을 학점을 입력하세요"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('추천받기'),
+              onPressed: () {
+                int credits = int.parse(creditController.text);
+                // API 호출 등을 통해 추천 과목을 받아오는 로직을 추가하세요.
+                // 예시: fetchRecommendedCourses(credits);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -245,6 +284,9 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Widget buildCart() {
+    int totalCredits = cartItems.fold(
+        0, (sum, item) => sum + int.parse(item['credit'] ?? '0'));
+
     return Container(
       margin: EdgeInsets.fromLTRB(8, 0, 8, 8), // Reduced top margin
       padding: EdgeInsets.all(16),
@@ -264,7 +306,7 @@ class _TimetablePageState extends State<TimetablePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('장바구니',
+          Text('장바구니 - 총 학점: $totalCredits',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
           Expanded(
@@ -533,21 +575,29 @@ class _TimetablePageState extends State<TimetablePage> {
                       'time': course['time'],
                       'parsedTime': course['parsedTime'].map((day, time) {
                         return MapEntry(
-                            day,
-                            time
-                                .map((range) =>
-                                    {'start': range.start, 'end': range.end})
-                                .toList());
+                          day,
+                          time
+                              .map((range) =>
+                                  {'start': range.start, 'end': range.end})
+                              .toList(),
+                        );
                       }),
-                      'color': course['color'].value
+                      'color': course['color'].value,
+                      'credit': course['credit'],
                     };
                   }).toList();
 
-                  List<String> cartItemsJson = cartItemsToSave
-                      .map((course) => jsonEncode(course))
-                      .toList();
-                  await prefs.setStringList(
-                      "timetable_${nameController.text}", cartItemsJson);
+                  int totalCredits = cartItems.fold(
+                      0, (sum, item) => sum + int.parse(item['credit'] ?? '0'));
+
+                  Map<String, dynamic> timetableData = {
+                    'cartItems': cartItemsToSave,
+                    'totalCredits': totalCredits,
+                  };
+
+                  String timetableJson = jsonEncode(timetableData);
+                  await prefs.setString(
+                      "timetable_${nameController.text}", timetableJson);
 
                   if (mounted) {
                     Navigator.of(context).pop(); // 창 닫기
@@ -570,6 +620,7 @@ class _TimetablePageState extends State<TimetablePage> {
     Set<String> keys = prefs.getKeys();
     List<String> timetableNames =
         keys.where((key) => key.startsWith("timetable_")).toList();
+
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -601,38 +652,51 @@ class _TimetablePageState extends State<TimetablePage> {
                         },
                       ),
                       onTap: () async {
-                        List<String>? cartItemsJson =
-                            prefs.getStringList(timetableNames[index]);
-                        if (cartItemsJson != null) {
-                          setState(() {
-                            cartItems = cartItemsJson
-                                .map((courseJson) {
-                                  Map<String, dynamic> course =
-                                      jsonDecode(courseJson);
-                                  course['parsedTime'] = (course['parsedTime']
-                                          as Map<String, dynamic>)
-                                      .map((day, times) {
-                                    return MapEntry(
+                        String? timetableJson =
+                            prefs.getString(timetableNames[index]);
+                        if (timetableJson != null) {
+                          Map<String, dynamic> timetableData =
+                              jsonDecode(timetableJson);
+                          List<Map<String, dynamic>> loadedCartItems =
+                              timetableData['cartItems']
+                                  .map((courseJson) {
+                                    Map<String, dynamic> course =
+                                        Map<String, dynamic>.from(courseJson);
+                                    course['parsedTime'] = (course['parsedTime']
+                                            as Map<String, dynamic>)
+                                        .map((day, times) {
+                                      return MapEntry(
                                         day,
                                         (times as List<dynamic>).map((range) {
                                           return RangeValues(
                                             range['start']?.toDouble() ?? 0.0,
                                             range['end']?.toDouble() ?? 0.0,
                                           );
-                                        }).toList());
-                                  });
-                                  course['color'] = Color(course['color']);
-                                  return course;
-                                })
-                                .toList()
-                                .cast<Map<String, dynamic>>();
+                                        }).toList(),
+                                      );
+                                    });
+                                    course['color'] = Color(course['color']);
+                                    course['credit'] = course['credit'] ??
+                                        '0'; // Ensure default value
+                                    return course;
+                                  })
+                                  .toList()
+                                  .cast<Map<String, dynamic>>();
+
+                          int loadedTotalCredits =
+                              timetableData['totalCredits'];
+
+                          setState(() {
+                            cartItems = loadedCartItems;
                           });
 
                           if (mounted) {
                             Navigator.of(context).pop(); // 창 닫기
 
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('시간표가 로드되었습니다.')),
+                              SnackBar(
+                                  content: Text(
+                                      '시간표가 로드되었습니다. 총 학점: $loadedTotalCredits')),
                             );
                           }
                         }

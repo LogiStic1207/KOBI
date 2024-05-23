@@ -219,8 +219,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 colorBlendMode: BlendMode.modulate,
               ),
             ),
-            Container(
-              height: MediaQuery.of(context).size.height - 136,
+            AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              height: MediaQuery.of(context).viewInsets.bottom == 0
+                  ? MediaQuery.of(context).size.height - 136
+                  : MediaQuery.of(context).size.height -
+                      136 -
+                      MediaQuery.of(context).viewInsets.bottom,
               child: ListView.builder(
                   controller: _scrollController,
                   itemCount: _messages.length,
