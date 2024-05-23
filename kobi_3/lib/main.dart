@@ -7,7 +7,7 @@ void main() async {
   await initHiveForFlutter(); // Initialize Hive for GraphQL cache
 
   final HttpLink httpLink = HttpLink(
-    'http://192.168.0.13:4000/graphql', // Correct the endpoint if necessary
+    'http://211.57.218.130:37628/graphql', // Correct the endpoint if necessary
   );
 
   final AuthLink authLink = AuthLink(
