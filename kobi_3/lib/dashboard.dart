@@ -8,6 +8,8 @@ import 'chatbotpage.dart';
 import 'style/styles.dart';
 import 'package:kobi_3/login.dart';
 import 'package:kobi_3/menu/shuttlecitychoose.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -114,8 +116,18 @@ class _DashboardPageState extends State<DashboardPage> {
     return cards;
   }
 
+  Future<http.Response> _makeLogoutRequest(String? currentId) {
+    var url = 'http://192.168.219.101:5000/logout';
+    return http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': currentId, 'pw': "logout"}),
+    );
+  }
+
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
+    _makeLogoutRequest(prefs.getString('lastLoggedInId'));
     await prefs.remove('savedId');
     await prefs.remove('savedPassword');
     await prefs.remove('isIdSaved');
