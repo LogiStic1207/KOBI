@@ -4,6 +4,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
@@ -455,7 +456,7 @@ class _TimetablePageState extends State<TimetablePage> {
       ),
     );
   }
-
+  /*
   void fetchCourses() async {
     setState(() {
       _isLoading = true;
@@ -486,7 +487,35 @@ class _TimetablePageState extends State<TimetablePage> {
       });
     }
   }
+  */
+  void fetchCourses() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      var response = await _load_selected_lecturedata();
+      final data = json.decode(response.body);
 
+      setState(() {
+        allCourses = List<Map<String, dynamic>>.from(data['courses']);
+        filteredCourses = [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching courses: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+  Future<http.Response> _load_selected_lecturedata() {
+    var url = 'http://192.168.219.101:5000/load';
+    return http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'selectedDepartment': _selectedDepartment}),
+    );
+  }
   bool isInCart(Map<String, dynamic> course) {
     return cartItems.any((item) => item['id'] == course['id']);
   }
