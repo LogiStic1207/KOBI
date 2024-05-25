@@ -1,33 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:kobi_3/login.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure plugin is initialized
-  await initHiveForFlutter(); // Initialize Hive for GraphQL cache
 
-  final HttpLink httpLink = HttpLink(
-    'http://211.57.218.130:37628/graphql', // Correct the endpoint if necessary
-  );
-
-  final AuthLink authLink = AuthLink(
-    getToken: () async =>
-        'Bearer <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>', // Ensure your token is fetched correctly
-  );
-
-  final Link link = authLink.concat(httpLink);
-
-  ValueNotifier<GraphQLClient> client = ValueNotifier(
-    GraphQLClient(
-      link: link,
-      cache: GraphQLCache(store: HiveStore()),
-    ),
-  );
-
-  runApp(GraphQLProvider(
-    client: client,
-    child: MaterialApp(home: MyApp()),
-  ));
+void main() {
+  runApp(MaterialApp(home: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
