@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
@@ -78,7 +77,9 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
           IconButton(
             icon: Icon(Icons.recommend),
-            onPressed: showRecommendationDialog,
+            onPressed: () {
+              showRecommendationDialog(context);
+            },
           ),
         ],
       ),
@@ -119,38 +120,73 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
-  void showRecommendationDialog() {
-    TextEditingController creditController = TextEditingController();
-
+  void showRecommendationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('과목 추천'),
-          content: TextField(
-            controller: creditController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(hintText: "추천받을 학점을 입력하세요"),
+          content: FutureBuilder<List<String>>(
+            future: _recommendTest(context),
+            builder:
+                (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('오류가 발생했습니다: ${snapshot.error}');
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Text('추천 과목이 없습니다.');
+              } else {
+                return Container(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        title: Text(snapshot.data![index]),
+                      );
+                    },
+                  ),
+                );
+              }
+            },
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('취소'),
+              child: Text('닫기'),
               onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('추천받기'),
-              onPressed: () {
-                int credits = int.parse(creditController.text);
-                // API 호출 등을 통해 추천 과목을 받아오는 로직을 추가하세요.
-                // 예시: fetchRecommendedCourses(credits);
                 Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
+    );
+  }
+
+  Future<List<String>> _recommendTest(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      var response = await _recommendRequest(prefs.getString('lastLoggedInId'));
+      if (response.statusCode == 200) {
+        var recommendList = jsonDecode(response.body)["recommend"];
+        return List<String>.from(recommendList);
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('오류: $e');
+      return [];
+    }
+  }
+
+  Future<http.Response> _recommendRequest(String? currentId) {
+    var url = 'http://192.168.35.38:5000/recommend';
+    return http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': currentId}),
     );
   }
 
@@ -456,6 +492,7 @@ class _TimetablePageState extends State<TimetablePage> {
       ),
     );
   }
+
   /*
   void fetchCourses() async {
     setState(() {
@@ -508,14 +545,16 @@ class _TimetablePageState extends State<TimetablePage> {
       });
     }
   }
+
   Future<http.Response> _load_selected_lecturedata() {
-    var url = 'http://192.168.219.101:5000/load';
+    var url = 'http://192.168.35.38:5000/load';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'selectedDepartment': _selectedDepartment}),
     );
   }
+
   bool isInCart(Map<String, dynamic> course) {
     return cartItems.any((item) => item['id'] == course['id']);
   }
