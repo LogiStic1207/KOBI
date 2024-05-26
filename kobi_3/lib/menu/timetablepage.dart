@@ -182,7 +182,7 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Future<http.Response> _recommendRequest(String? currentId) {
-    var url = 'http://192.168.219.101:5000/recommend';
+    var url = 'http://192.168.0.13:5000/recommend';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -493,38 +493,6 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
-  /*
-  void fetchCourses() async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      var client = GraphQLProvider.of(context).value;
-      var result = await client.query(
-        QueryOptions(
-          document: gql(query),
-          variables: {'_selectedDepartment': _selectedDepartment},
-        ),
-      );
-
-      if (result.hasException) {
-        print(result.exception.toString());
-        return;
-      }
-
-      setState(() {
-        allCourses = List<Map<String, dynamic>>.from(result.data!['courses']);
-        filteredCourses = [];
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching courses: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-  */
   void fetchCourses() async {
     setState(() {
       _isLoading = true;
@@ -547,7 +515,7 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Future<http.Response> _load_selected_lecturedata() {
-    var url = 'http://192.168.219.101:5000/load';
+    var url = 'http://192.168.0.13:5000/load';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -693,7 +661,7 @@ class _TimetablePageState extends State<TimetablePage> {
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
+          builder: (BuildContext context, StateSetter dialogSetState) {
             return AlertDialog(
               title: Text('시간표 불러오기'),
               content: Container(
@@ -710,7 +678,7 @@ class _TimetablePageState extends State<TimetablePage> {
                         icon: Icon(Icons.delete, color: Colors.red),
                         onPressed: () async {
                           await prefs.remove(timetableNames[index]);
-                          setState(() {
+                          dialogSetState(() {
                             timetableNames.removeAt(index);
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -726,47 +694,45 @@ class _TimetablePageState extends State<TimetablePage> {
                           Map<String, dynamic> timetableData =
                               jsonDecode(timetableJson);
                           List<Map<String, dynamic>> loadedCartItems =
-                              timetableData['cartItems']
-                                  .map((courseJson) {
-                                    Map<String, dynamic> course =
-                                        Map<String, dynamic>.from(courseJson);
-                                    course['parsedTime'] = (course['parsedTime']
-                                            as Map<String, dynamic>)
-                                        .map((day, times) {
-                                      return MapEntry(
-                                        day,
-                                        (times as List<dynamic>).map((range) {
-                                          return RangeValues(
-                                            range['start']?.toDouble() ?? 0.0,
-                                            range['end']?.toDouble() ?? 0.0,
-                                          );
-                                        }).toList(),
-                                      );
-                                    });
-                                    course['color'] = Color(course['color']);
-                                    course['credit'] = course['credit'] ??
-                                        '0'; // Ensure default value
-                                    return course;
-                                  })
-                                  .toList()
-                                  .cast<Map<String, dynamic>>();
+                              List<Map<String, dynamic>>.from(
+                                  timetableData['cartItems'].map((courseJson) {
+                            Map<String, dynamic> course =
+                                Map<String, dynamic>.from(courseJson);
+                            course['parsedTime'] =
+                                (course['parsedTime'] as Map<String, dynamic>)
+                                    .map((day, times) {
+                              return MapEntry(
+                                day,
+                                (times as List<dynamic>).map((range) {
+                                  return RangeValues(
+                                    range['start']?.toDouble() ?? 0.0,
+                                    range['end']?.toDouble() ?? 0.0,
+                                  );
+                                }).toList(),
+                              );
+                            });
+                            course['color'] = Color(course['color']);
+                            course['credit'] =
+                                course['credit'] ?? '0'; // 기본 값 보장
+                            return course;
+                          }).toList());
 
                           int loadedTotalCredits =
                               timetableData['totalCredits'];
 
+                          // 부모 위젯의 상태 업데이트
                           setState(() {
                             cartItems = loadedCartItems;
+                            // 필요한 경우 다른 상태 변수도 여기서 업데이트
                           });
 
-                          if (mounted) {
-                            Navigator.of(context).pop(); // 창 닫기
+                          Navigator.of(context).pop(); // 다이얼로그 닫기
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      '시간표가 로드되었습니다. 총 학점: $loadedTotalCredits')),
-                            );
-                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    '시간표가 로드되었습니다. 총 학점: $loadedTotalCredits')),
+                          );
                         }
                       },
                     );

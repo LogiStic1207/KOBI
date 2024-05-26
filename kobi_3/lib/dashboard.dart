@@ -132,7 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<http.Response> _recommendRequest(String? currentId) {
-    var url = 'http://192.168.219.101:5000/recommend';
+    var url = 'http://192.168.0.13:5000/recommend';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -141,7 +141,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<http.Response> _makeLogoutRequest(String? currentId) {
-    var url = 'http://192.168.219.101:5000/logout';
+    var url = 'http://192.168.0.13:5000/logout';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -182,8 +182,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             TextButton(
               onPressed: () async {
-                await _recommendTest(
-                    context); //Navigator.of(context).pop(); // 알림창 닫기
+                await _recommendTest(context);
+                Navigator.of(context).pop(); // 알림창 닫기
               },
               child: const Text('아니오'),
             ),
