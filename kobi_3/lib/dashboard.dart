@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kobi_3/menu/timetablepage.dart';
-import 'menu/inquiry_page.dart';
 import 'menu/mypage.dart';
-import 'menu/options.dart';
 import 'chatbotpage.dart';
 import 'style/styles.dart';
 import 'package:kobi_3/login.dart';
@@ -227,16 +225,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.contact_support),
-              title: Text('문의하기'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => InquiryPage()),
-                );
-              },
-            ),
             Spacer(),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -263,17 +251,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         ],
                       ),
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  IconButton(
-                    icon: Icon(Icons.settings),
-                    color: Color(0xff30619c),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => OptionsPage()),
-                      );
-                    },
                   ),
                 ],
               ),
