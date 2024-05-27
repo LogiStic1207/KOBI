@@ -77,7 +77,7 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
           IconButton(
             icon: Icon(Icons.recommend),
-            onPressed: () {
+            onPressed: () async {
               showRecommendationDialog(context);
             },
           ),
@@ -186,7 +186,7 @@ class _TimetablePageState extends State<TimetablePage> {
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': currentId}),
+      body: jsonEncode({'id': currentId, 'pw': "test"}),
     );
   }
 
