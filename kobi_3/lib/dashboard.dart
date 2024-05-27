@@ -114,32 +114,11 @@ class _DashboardPageState extends State<DashboardPage> {
     return cards;
   }
 
-  Future<void> _recommendTest(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    try {
-      var response = await _recommendRequest(prefs.getString('lastLoggedInId'));
-      var recommend_list = jsonDecode(response.body)["recommend"];
-      if (response.statusCode == 200) {
-        for (var top5 in recommend_list) {
-          print(top5);
-        }
-      }
-    } catch (e) {
-      print('오류: $e');
-    }
-  }
 
-  Future<http.Response> _recommendRequest(String? currentId) {
-    var url = 'http://192.168.0.13:5000/recommend';
-    return http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': currentId, 'pw': "test"}),
-    );
-  }
+
 
   Future<http.Response> _makeLogoutRequest(String? currentId) {
-    var url = 'http://192.168.0.13:5000/logout';
+    var url = 'http://211.57.218.130:37627/logout';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -179,8 +158,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: const Text('예'),
             ),
             TextButton(
-              onPressed: () async {
-                await _recommendTest(context);
+              onPressed: () {
                 Navigator.of(context).pop(); // 알림창 닫기
               },
               child: const Text('아니오'),

@@ -182,11 +182,11 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Future<http.Response> _recommendRequest(String? currentId) {
-    var url = 'http://192.168.0.13:5000/recommend';
+    var url = 'http://211.57.218.130:37627/recommend';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': currentId, 'pw': "test"}),
+      body: jsonEncode({"recommend": ""}),
     );
   }
 
@@ -515,7 +515,7 @@ class _TimetablePageState extends State<TimetablePage> {
   }
 
   Future<http.Response> _load_selected_lecturedata() {
-    var url = 'http://192.168.0.13:5000/load';
+    var url = 'http://211.57.218.130:37627/load';
     return http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
