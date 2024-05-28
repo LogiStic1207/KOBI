@@ -47,6 +47,20 @@ class _TimetablePageState extends State<TimetablePage> {
     '융합학과'
   ];
 
+  Map<String, List<String>> departmentCodes = {
+    '기계공학부': ['MEE', 'MEG', 'MEF', 'MES', 'MEC', 'MEB', 'MEA'],
+    '메카트로닉스공학부': ['MTC', 'MTB', 'MTA', 'MCA', 'CCT', 'MTS'],
+    '전기ㆍ전자ㆍ통신공학부': ['IFA', 'IFB', 'IFC', 'IFE'],
+    '컴퓨터공학부': ['CSE'],
+    '디자인ㆍ건축공학부': ['IDA', 'ARB', 'ARD', 'ARE'],
+    '에너지신소재화학공학부': ['CHA', 'MSA'],
+    '산업경영학부': ['IMA', 'IMC', 'IMB'],
+    '고용서비스정책학과': ['ESP'],
+    '교양학부': ['SHA', 'SHB', 'KMC', 'CON', 'NAT', 'LAN', 'IME'],
+    'HRD학과': ['EDU', 'HRD'],
+    '융합학과': ['CVG']
+  };
+
   List<Map<String, dynamic>> allCourses = [];
   List<Map<String, dynamic>> filteredCourses = [];
   List<Map<String, dynamic>> cartItems = [];
@@ -131,20 +145,51 @@ class _TimetablePageState extends State<TimetablePage> {
             builder:
                 (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
                 return Text('오류가 발생했습니다: ${snapshot.error}');
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Text('추천 과목이 없습니다.');
               } else {
+                // 데이터가 있을 경우 10개로 제한
+                List<String> recommendations = snapshot.data!.take(10).toList();
                 return Container(
                   width: double.maxFinite,
                   child: ListView.builder(
                     shrinkWrap: true,
-                    itemCount: snapshot.data!.length,
+                    itemCount: recommendations.length,
                     itemBuilder: (BuildContext context, int index) {
                       return ListTile(
-                        title: Text(snapshot.data![index]),
+                        title: Text(
+                          recommendations[index],
+                          style: TextStyle(fontSize: 12), // 원하는 글자 크기로 변경
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.search),
+                          onPressed: () async {
+                            Navigator.of(context).pop(); // 추천 창 닫기
+                            String courseCode =
+                                recommendations[index].split(' | ')[0];
+                            String courseName =
+                                recommendations[index].split(' | ')[1];
+                            String department = departmentCodes.keys.firstWhere(
+                              (key) =>
+                                  departmentCodes[key]!.contains(courseCode),
+                              orElse: () => '학부 선택',
+                            );
+
+                            // Set the department and course name, then perform the search
+                            setState(() {
+                              _selectedDepartment = department;
+                              _searchController.text = courseName;
+                            });
+
+                            // Wait for the panel to open and the courses to be fetched
+                            _panelController.open();
+                            fetchCourses();
+                            performSearch(); // 과목 검색 수행
+                          },
+                        ),
                       );
                     },
                   ),
@@ -165,20 +210,20 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
+  // _recommendTest 함수가 Future<List<String>>을 반환하도록 수정
   Future<List<String>> _recommendTest(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
+    List<String> recommendations = [];
     try {
       var response = await _recommendRequest(prefs.getString('lastLoggedInId'));
+      var recommend_list = jsonDecode(response.body)["recommend"];
       if (response.statusCode == 200) {
-        var recommendList = jsonDecode(response.body)["recommend"];
-        return List<String>.from(recommendList);
-      } else {
-        return [];
+        recommendations = List<String>.from(recommend_list);
       }
     } catch (e) {
       print('오류: $e');
-      return [];
     }
+    return recommendations;
   }
 
   Future<http.Response> _recommendRequest(String? currentId) {
@@ -188,6 +233,16 @@ class _TimetablePageState extends State<TimetablePage> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({"recommend": ""}),
     );
+  }
+
+  void performSearch() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredCourses = allCourses.where((course) {
+        return course['name'].toLowerCase().contains(query) ||
+            course['professor'].toLowerCase().contains(query);
+      }).toList();
+    });
   }
 
   Map<String, List<RangeValues>> parseCourseTime(String timeString) {
@@ -372,16 +427,6 @@ class _TimetablePageState extends State<TimetablePage> {
         ],
       ),
     );
-  }
-
-  void performSearch() {
-    String query = _searchController.text.toLowerCase();
-    setState(() {
-      filteredCourses = allCourses.where((course) {
-        return course['name'].toLowerCase().contains(query) ||
-            course['professor'].toLowerCase().contains(query);
-      }).toList();
-    });
   }
 
   Widget buildSlidingPanel() {

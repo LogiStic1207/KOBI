@@ -37,7 +37,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  String selectedTab = 'All';
   int chatBotCount = 0;
   int timetableCount = 0;
   int busInfoCount = 0;
@@ -75,47 +74,25 @@ class _DashboardPageState extends State<DashboardPage> {
 
   List<Widget> _getFilteredCards() {
     List<Widget> cards = [];
-    double speechBubbleTop = selectedTab == 'Favourite' ? 60 : 2;
-    if (selectedTab == 'All' || selectedTab == 'Recommended') {
-      cards.add(ChatBotCard(
-          onTap: () => _incrementCount('ChatBot'),
-          speechBubbleTop: speechBubbleTop));
-      cards.add(const SizedBox(height: 55));
-      cards.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: TimetableCard(onTap: () => _incrementCount('Timetable')),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: BusInfoCard(onTap: () => _incrementCount('BusInfo')),
-          ),
-        ],
-      ));
-    }
-    if (selectedTab == 'Favourite') {
-      if (chatBotCount >= timetableCount && chatBotCount >= busInfoCount) {
-        cards.add(ChatBotCard(
-            onTap: () => _incrementCount('ChatBot'),
-            speechBubbleTop: speechBubbleTop));
-      } else if (timetableCount >= chatBotCount &&
-          timetableCount >= busInfoCount) {
-        cards.add(TimetableCard(
-            onTap: () => _incrementCount('Timetable'),
-            speechBubbleTop: speechBubbleTop));
-      } else if (busInfoCount >= chatBotCount &&
-          busInfoCount >= timetableCount) {
-        cards.add(BusInfoCard(
-            onTap: () => _incrementCount('BusInfo'),
-            speechBubbleTop: speechBubbleTop));
-      }
-    }
+    double speechBubbleTop = 2;
+    cards.add(ChatBotCard(
+        onTap: () => _incrementCount('ChatBot'),
+        speechBubbleTop: speechBubbleTop));
+    cards.add(const SizedBox(height: 55));
+    cards.add(Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: TimetableCard(onTap: () => _incrementCount('Timetable')),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: BusInfoCard(onTap: () => _incrementCount('BusInfo')),
+        ),
+      ],
+    ));
     return cards;
   }
-
-
-
 
   Future<http.Response> _makeLogoutRequest(String? currentId) {
     var url = 'http://211.57.218.130:37627/logout';
@@ -292,54 +269,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedTab = 'All';
-                          });
-                        },
-                        child: Text(
-                          'All',
-                          style: selectedTab == 'All'
-                              ? AppStyle.m12b.copyWith(
-                                  decoration: TextDecoration.underline)
-                              : AppStyle.m12bt,
-                        ),
-                      ),
-                      const SizedBox(width: 30),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedTab = 'Favourite';
-                          });
-                        },
-                        child: Text(
-                          'Favourite',
-                          style: selectedTab == 'Favourite'
-                              ? AppStyle.m12b.copyWith(
-                                  decoration: TextDecoration.underline)
-                              : AppStyle.m12bt,
-                        ),
-                      ),
-                      const SizedBox(width: 30),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedTab = 'Recommended';
-                          });
-                        },
-                        child: Text(
-                          'Recommended',
-                          style: selectedTab == 'Recommended'
-                              ? AppStyle.m12b.copyWith(
-                                  decoration: TextDecoration.underline)
-                              : AppStyle.m12bt,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 20),
                   Expanded(
                     child: SingleChildScrollView(
@@ -372,7 +301,7 @@ class ChatBotCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          left: 30,
+          left: 28,
           top: speechBubbleTop, // 말풍선의 top 값을 매개변수로 받아서 설정
           child: SpeechBubble(
             text: '새 채팅창을 만드세요. 코비가 원하는것을 알려드려요',
