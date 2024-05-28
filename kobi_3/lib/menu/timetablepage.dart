@@ -173,21 +173,27 @@ class _TimetablePageState extends State<TimetablePage> {
                             String courseName =
                                 recommendations[index].split(' | ')[1];
                             String department = departmentCodes.keys.firstWhere(
-                              (key) =>
-                                  departmentCodes[key]!.contains(courseCode),
+                              (key) => departmentCodes[key]!
+                                  .any((code) => courseCode.startsWith(code)),
                               orElse: () => '학부 선택',
                             );
 
-                            // Set the department and course name, then perform the search
+                            // 학부 선택
                             setState(() {
                               _selectedDepartment = department;
+                            });
+
+                            // 패널 열기 및 과목 로드
+                            _panelController.open();
+                            await fetchCourses();
+
+                            // 과목명 설정 후 검색 수행
+                            setState(() {
                               _searchController.text = courseName;
                             });
 
-                            // Wait for the panel to open and the courses to be fetched
-                            _panelController.open();
-                            fetchCourses();
-                            performSearch(); // 과목 검색 수행
+                            // 검색 수행
+                            performSearch();
                           },
                         ),
                       );
@@ -208,6 +214,16 @@ class _TimetablePageState extends State<TimetablePage> {
         );
       },
     );
+  }
+
+  void performSearch() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredCourses = allCourses.where((course) {
+        return course['name'].toLowerCase().contains(query) ||
+            course['professor'].toLowerCase().contains(query);
+      }).toList();
+    });
   }
 
   // _recommendTest 함수가 Future<List<String>>을 반환하도록 수정
@@ -233,16 +249,6 @@ class _TimetablePageState extends State<TimetablePage> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({"recommend": ""}),
     );
-  }
-
-  void performSearch() {
-    String query = _searchController.text.toLowerCase();
-    setState(() {
-      filteredCourses = allCourses.where((course) {
-        return course['name'].toLowerCase().contains(query) ||
-            course['professor'].toLowerCase().contains(query);
-      }).toList();
-    });
   }
 
   Map<String, List<RangeValues>> parseCourseTime(String timeString) {
@@ -538,7 +544,7 @@ class _TimetablePageState extends State<TimetablePage> {
     );
   }
 
-  void fetchCourses() async {
+  Future<void> fetchCourses() async {
     setState(() {
       _isLoading = true;
     });
