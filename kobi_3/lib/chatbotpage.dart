@@ -67,10 +67,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
     if (text.isNotEmpty) {
       setState(() {
         _messages.add({"text": text, "isBot": false});
+        _messages.add({
+          "text": "Loading...",
+          "isBot": true,
+          "isLoading": true
+        }); // Add loading state
       });
       _controller.clear();
       _scrollToEnd();
-      // Send user message to the server and wait for the response
       var url = 'http://211.57.218.130:37627/query';
       var response = await http.post(Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
@@ -78,9 +82,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
-        //print(responseData);
-
         setState(() {
+          _messages.removeLast(); // Remove loading state
           _answer = responseData['Answer'];
           if (responseData.containsKey('Link')) {
             _menulink = responseData['Link'];
@@ -90,15 +93,19 @@ class _ChatBotPageState extends State<ChatBotPage> {
             _messages.add({"text": _answer, "isBot": true, "Img": _hasMap});
           }
         });
-        //print(_messages);
         _scrollToEnd();
       } else {
         setState(() {
+          _messages.removeLast(); // Remove loading state
           _messages.add({"text": "Failed to fetch response", "isBot": true});
         });
         _scrollToEnd();
       }
     }
+  }
+
+  bool isLoadingMessage(Map<String, dynamic> _message) {
+    return _message.containsKey('isLoading') && _message['isLoading'];
   }
 
   Future<void> _launchUrl() async {
@@ -119,8 +126,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
     bool isBot = _message["isBot"];
     bool isLinkMessage = checkLinkMessage(_message);
     bool isImgMessage = checkImgMessage(_message);
-    //print(isLinkMessage);
-    // 챗봇 프로필과 이름을 가로로 나열하는 위젯
+    bool isLoading = isLoadingMessage(_message);
+
     Widget botHeader = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -154,7 +161,18 @@ class _ChatBotPageState extends State<ChatBotPage> {
       ],
     );
 
-    // 메시지 텍스트
+    Widget loadingIndicator = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xff30619c)),
+        ),
+        SizedBox(width: 10),
+        Text("코비가 답변중이에요...",
+            style: TextStyle(fontSize: 16, color: Colors.black)),
+      ],
+    );
+
     Widget messageText = Container(
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -170,11 +188,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
           )
         ],
       ),
-      child: isLinkMessage
-          ? linkText
-          : isImgMessage
-              ? imgText
-              : generalText,
+      child: isLoading
+          ? loadingIndicator
+          : isLinkMessage
+              ? linkText
+              : isImgMessage
+                  ? imgText
+                  : generalText,
     );
 
     return Padding(
